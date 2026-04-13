@@ -15,7 +15,7 @@ export default function RootLayout({ children }) {
             <span className="logo">WebPolimorfica</span>
             <nav className="main-nav">
               <NavLink href="/">Inicio</NavLink>
-              {/* Nuevas pestañas se añadirán aquí */}
+              <NavLink href="/juegos">Juegos</NavLink>
             </nav>
           </div>
         </header>
