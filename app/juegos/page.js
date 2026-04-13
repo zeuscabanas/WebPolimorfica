@@ -34,6 +34,13 @@ export default function JuegosPage() {
             <p>El clásico X y O. Marcador acumulado para llevar la cuenta entre partidas.</p>
           </div>
         </Link>
+        <Link href="/juegos/cuatro-en-raya" style={{ textDecoration: 'none' }}>
+          <div className="card" style={{ cursor: 'pointer' }}>
+            <div className="card-icon">🔴</div>
+            <h3>Cuatro en Raya</h3>
+            <p>Conecta 4 fichas en línea antes que tu rival. Rojo contra Amarillo.</p>
+          </div>
+        </Link>
       </div>
     </>
   );
