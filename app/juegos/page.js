@@ -41,6 +41,13 @@ export default function JuegosPage() {
             <p>Conecta 4 fichas en línea antes que tu rival. Rojo contra Amarillo.</p>
           </div>
         </Link>
+        <Link href="/juegos/tetris" style={{ textDecoration: 'none' }}>
+          <div className="card" style={{ cursor: 'pointer' }}>
+            <div className="card-icon">🧩</div>
+            <h3>Tetris</h3>
+            <p>El clásico de bloques. Ghost piece, niveles, y controles táctiles para móvil.</p>
+          </div>
+        </Link>
       </div>
     </>
   );
