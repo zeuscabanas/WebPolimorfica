@@ -443,3 +443,73 @@ a {
   .dot { width: 14px; height: 14px; }
   .dot.cap { width: 36px; height: 36px; }
 }
+
+/* ── Tres en Raya ── */
+.ttr-scores {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  margin-bottom: 24px;
+}
+
+.ttr-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+  min-width: 56px;
+}
+.ttr-score.active { opacity: 1; }
+
+.ttr-player { font-size: 1.5rem; font-weight: 800; }
+.ttr-score.x .ttr-player { color: #60a5fa; }
+.ttr-score.o .ttr-player { color: #f87171; }
+
+.ttr-pts {
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--text);
+}
+
+.ttr-status {
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+.ttr-status.x    { color: #60a5fa; }
+.ttr-status.o    { color: #f87171; }
+.ttr-status.draw { color: var(--text-muted); }
+
+.ttr-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.ttr-cell {
+  aspect-ratio: 1;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: clamp(2rem, 10vw, 4rem);
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  color: transparent;
+}
+.ttr-cell:hover:not(.filled) {
+  background: var(--surface);
+  border-color: var(--accent);
+  transform: scale(1.03);
+}
+.ttr-cell.x   { color: #60a5fa; border-color: #3b82f680; }
+.ttr-cell.o   { color: #f87171; border-color: #ef444480; }
+.ttr-cell.win { border-color: #4ade80; background: #16a34a22; transform: scale(1.05); }
