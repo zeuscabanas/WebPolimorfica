@@ -27,6 +27,13 @@ export default function JuegosPage() {
             <p>Partida completa para dos jugadores por turnos en el mismo dispositivo.</p>
           </div>
         </Link>
+        <Link href="/juegos/tres-en-raya" style={{ textDecoration: 'none' }}>
+          <div className="card" style={{ cursor: 'pointer' }}>
+            <div className="card-icon">✖</div>
+            <h3>Tres en Raya</h3>
+            <p>El clásico X y O. Marcador acumulado para llevar la cuenta entre partidas.</p>
+          </div>
+        </Link>
       </div>
     </>
   );
