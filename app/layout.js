@@ -16,6 +16,7 @@ export default function RootLayout({ children }) {
             <nav className="main-nav">
               <NavLink href="/">Inicio</NavLink>
               <NavLink href="/juegos">Juegos</NavLink>
+              <NavLink href="/curriculum">Currículum</NavLink>
             </nav>
           </div>
         </header>
