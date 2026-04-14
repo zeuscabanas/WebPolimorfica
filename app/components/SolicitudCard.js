@@ -2,8 +2,9 @@
 import { useState } from 'react';
 
 export default function SolicitudCard({ tipo }) {
-  const [desc, setDesc]     = useState('');
-  const [status, setStatus] = useState('idle');
+  const [desc, setDesc]       = useState('');
+  const [status, setStatus]   = useState('idle');
+  const [errMsg, setErrMsg]   = useState('');
 
   const esJuego = tipo === 'juego';
 
@@ -12,13 +13,20 @@ export default function SolicitudCard({ tipo }) {
     if (!desc.trim()) return;
     setStatus('loading');
     try {
-      const res = await fetch('/api/solicitud', {
+      const res  = await fetch('/api/solicitud', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo, descripcion: desc.trim() }),
       });
-      setStatus(res.ok ? 'done' : 'error');
-    } catch {
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('done');
+      } else {
+        setErrMsg(data.error || `Error ${res.status}`);
+        setStatus('error');
+      }
+    } catch (e) {
+      setErrMsg(e.message || 'Error de red');
       setStatus('error');
     }
   };
@@ -63,7 +71,7 @@ export default function SolicitudCard({ tipo }) {
 
       {status === 'error' && (
         <div>
-          <p className="solicitud-feedback solicitud-err">Error al enviar. Inténtalo de nuevo.</p>
+          <p className="solicitud-feedback solicitud-err">{errMsg || 'Error al enviar.'}</p>
           <button className="btn-secondary" style={{ marginTop: '8px' }} onClick={() => { setStatus('idle'); setDesc(''); }}>
             Reintentar
           </button>
