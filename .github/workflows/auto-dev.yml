@@ -1,0 +1,91 @@
+name: Auto-implement game or tool
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  implement:
+    # Only runs when the 'auto-dev' label is added to an issue
+    if: github.event.label.name == 'auto-dev'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Implement with Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          direct_prompt: |
+            You are implementing a new feature for a Next.js 14 personal portfolio website.
+
+            A user has requested the following via the website:
+            ---
+            TITLE: ${{ github.event.issue.title }}
+            DESCRIPTION:
+            ${{ github.event.issue.body }}
+            ---
+
+            ## Your task
+
+            Read the issue carefully and determine:
+            1. Is it a GAME (tipo: juego) or a TOOL (tipo: herramienta)?
+            2. What specifically needs to be built?
+
+            ## Project structure
+            - `app/juegos/page.js` — listing of games (cards grid)
+            - `app/juegos/{slug}/page.js` — individual game pages
+            - `app/herramientas/page.js` — listing of tools (cards grid)
+            - `app/herramientas/{slug}/page.js` — individual tool pages
+            - `app/globals.css` — all CSS (dark theme, vars: --bg #0f1117, --accent #6c63ff, --surface #1a1d27)
+            - `app/components/` — shared components
+
+            ## What to do
+
+            1. Create the new page at the correct path (e.g. `app/juegos/snake/page.js`)
+               - Add `'use client'` at the top if it uses state/effects
+               - Implement the game or tool fully — it must actually work
+               - Follow the existing code style (vanilla React hooks, no extra libraries unless essential)
+               - For games: use Canvas or DOM directly, add keyboard + touch controls
+               - For tools: follow the pattern in `app/herramientas/quitar-fondo/page.js`
+
+            2. Add a card for it in the listing page (`app/juegos/page.js` or `app/herramientas/page.js`)
+               - Copy the card pattern from existing entries
+               - Choose an appropriate emoji icon
+
+            3. If you need CSS, append it to `app/globals.css`
+
+            4. Commit all changes with message: `feat: auto-implement [name] from user request`
+
+            5. Push to branch `main`
+
+            ## Rules
+            - The implementation must be complete and functional, not a stub
+            - Do NOT install new npm packages — use only what's already available
+            - Keep the dark theme consistent with the rest of the site
+            - After committing, comment on the GitHub issue: "✅ Implementado y desplegado: [path]"
+
+          allowed_tools: "Read,Write,Edit,Bash,Glob,Grep"
+
+      - name: Comment on issue if action failed
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Hubo un error al intentar implementar esta solicitud automáticamente. Se revisará manualmente.'
+            })
