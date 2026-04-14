@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import SolicitudCard from '../components/SolicitudCard';
 
 export const metadata = {
   title: 'Herramientas — César Cabanas',
@@ -32,6 +33,8 @@ export default function HerramientasPage() {
           </Link>
         ))}
       </div>
+
+      <SolicitudCard tipo="herramienta" />
     </>
   );
 }
