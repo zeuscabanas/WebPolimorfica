@@ -1,6 +1,5 @@
 'use client';
-import { useEffect } from 'react';
-import Link from 'next/link';
+import { useEffect, useState, useRef } from 'react';
 
 const CV = {
   name: 'César Cabanas',
@@ -93,6 +92,30 @@ const skillColor = lvl =>
   lvl >= 80 ? '#22c55e' : lvl >= 60 ? '#6c63ff' : lvl >= 40 ? '#f59e0b' : '#64748b';
 
 export default function Curriculum() {
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [status, setStatus] = useState('idle'); // idle | sending | ok | error
+  const [errorMsg, setErrorMsg] = useState('');
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.message) return;
+    setStatus('sending');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+      setStatus('ok');
+      setForm({ name: '', email: '', message: '' });
+    } catch (err) {
+      setErrorMsg(err.message);
+      setStatus('error');
+    }
+  }
+
   useEffect(() => {
     const io = new IntersectionObserver(
       entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('cv-visible'); io.unobserve(e.target); } }),
@@ -231,7 +254,64 @@ export default function Curriculum() {
       <section className="cv-cta cv-reveal">
         <h3 className="cv-cta-title">¿Hablamos?</h3>
         <p className="cv-cta-sub">Abierto a nuevas oportunidades y proyectos interesantes.</p>
-        <a href={`mailto:${CV.contact.email}`} className="cv-cta-btn">Enviar un mensaje</a>
+
+        {status === 'ok' ? (
+          <div className="cv-form-success">
+            <span className="cv-form-success-icon">✓</span>
+            <p>¡Mensaje enviado! Te responderé lo antes posible.</p>
+          </div>
+        ) : (
+          <form className="cv-contact-form" onSubmit={handleSubmit} noValidate>
+            <div className="cv-form-row">
+              <div className="cv-form-group">
+                <label className="cv-form-label" htmlFor="cf-name">Nombre</label>
+                <input
+                  id="cf-name"
+                  className="cv-form-input"
+                  type="text"
+                  placeholder="Tu nombre"
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="cv-form-group">
+                <label className="cv-form-label" htmlFor="cf-email">Email</label>
+                <input
+                  id="cf-email"
+                  className="cv-form-input"
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            <div className="cv-form-group">
+              <label className="cv-form-label" htmlFor="cf-msg">Mensaje</label>
+              <textarea
+                id="cf-msg"
+                className="cv-form-input cv-form-textarea"
+                placeholder="Cuéntame en qué puedo ayudarte..."
+                rows={4}
+                value={form.message}
+                onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                required
+              />
+            </div>
+            {status === 'error' && (
+              <p className="cv-form-error">Error: {errorMsg}</p>
+            )}
+            <button
+              type="submit"
+              className="cv-cta-btn"
+              disabled={status === 'sending'}
+            >
+              {status === 'sending' ? 'Enviando…' : 'Enviar mensaje'}
+            </button>
+          </form>
+        )}
       </section>
 
     </div>
