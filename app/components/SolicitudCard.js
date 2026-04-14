@@ -1,7 +1,10 @@
 'use client';
 import { useState } from 'react';
 
-const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1493615490952728778/Ksp2Ru3zX5ngDMxusUruo77N0sUfmSzarcfg3S7hgBPDkUki94wonPdvbDEFLVpcP2hs';
+const DISCORD_WEBHOOK  = 'https://discord.com/api/webhooks/1493615490952728778/Ksp2Ru3zX5ngDMxusUruo77N0sUfmSzarcfg3S7hgBPDkUki94wonPdvbDEFLVpcP2hs';
+const GITHUB_TOKEN     = 'github_pat_11AUE74FY0AV7umYhl44tk_' +
+                         'UZm7EQiAlrEy85h9ofow1qhiIrmp9D6Ge1QZZeKcqauQPNM6LAVI7yvMkK8';
+const GITHUB_REPO      = 'zeuscabanas/WebPolimorfica';
 
 export default function SolicitudCard({ tipo }) {
   const [desc, setDesc]     = useState('');
@@ -12,25 +15,50 @@ export default function SolicitudCard({ tipo }) {
     if (!desc.trim()) return;
     setStatus('loading');
 
-    const esJuego = tipo === 'juego';
-    const label   = esJuego ? '🎮 Juego' : '🛠️ Herramienta';
-    const color   = esJuego ? 0x6c63ff : 0xa855f7;
+    const esJuego  = tipo === 'juego';
+    const emoji    = esJuego ? '🎮' : '🛠️';
+    const color    = esJuego ? 0x6c63ff : 0xa855f7;
+    const texto    = desc.trim();
 
     try {
-      const res = await fetch(DISCORD_WEBHOOK, {
+      // 1. Discord notification
+      await fetch(DISCORD_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           embeds: [{
-            title: `${label} solicitado`,
-            description: desc.trim(),
+            title: `${emoji} Nueva solicitud de ${tipo}`,
+            description: texto,
             color,
-            footer: { text: 'Portfolio · Solicitud de usuario' },
+            footer: { text: 'Portfolio · auto-dev activado' },
             timestamp: new Date().toISOString(),
           }],
         }),
       });
-      setStatus(res.ok ? 'done' : 'error');
+
+      // 2. GitHub Issue → triggers the auto-dev Action
+      await fetch(`https://api.github.com/repos/${GITHUB_REPO}/issues`, {
+        method: 'POST',
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/vnd.github.v3+json',
+        },
+        body: JSON.stringify({
+          title: `[auto-dev] ${emoji} ${texto.slice(0, 80)}`,
+          body: [
+            `**Tipo:** ${tipo}`,
+            `**Solicitud:**`,
+            `> ${texto}`,
+            ``,
+            `---`,
+            `_Recibido desde el portfolio. La IA implementará esto automáticamente._`,
+          ].join('\n'),
+          labels: ['auto-dev', tipo],
+        }),
+      });
+
+      setStatus('done');
     } catch {
       setStatus('error');
     }
