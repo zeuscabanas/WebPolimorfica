@@ -1,19 +1,34 @@
 'use client';
 import { useState } from 'react';
 
+const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1493615490952728778/Ksp2Ru3zX5ngDMxusUruo77N0sUfmSzarcfg3S7hgBPDkUki94wonPdvbDEFLVpcP2hs';
+
 export default function SolicitudCard({ tipo }) {
-  const [desc, setDesc]   = useState('');
+  const [desc, setDesc]     = useState('');
   const [status, setStatus] = useState('idle');
 
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!desc.trim()) return;
     setStatus('loading');
+
+    const esJuego = tipo === 'juego';
+    const label   = esJuego ? '🎮 Juego' : '🛠️ Herramienta';
+    const color   = esJuego ? 0x6c63ff : 0xa855f7;
+
     try {
-      const res = await fetch('/api/solicitud', {
+      const res = await fetch(DISCORD_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo, descripcion: desc.trim() }),
+        body: JSON.stringify({
+          embeds: [{
+            title: `${label} solicitado`,
+            description: desc.trim(),
+            color,
+            footer: { text: 'Portfolio · Solicitud de usuario' },
+            timestamp: new Date().toISOString(),
+          }],
+        }),
       });
       setStatus(res.ok ? 'done' : 'error');
     } catch {
@@ -28,7 +43,7 @@ export default function SolicitudCard({ tipo }) {
       <div className="solicitud-icon">{esJuego ? '🙋' : '💡'}</div>
       <h3 className="solicitud-title">Pide el tuyo propio</h3>
       <p className="solicitud-desc">
-        ¿Tienes en mente {esJuego ? 'un juego' : 'una herramienta'}? Descríbelo y la IA lo implementa y despliega automáticamente.
+        ¿Tienes en mente {esJuego ? 'un juego' : 'una herramienta'}? Descríbelo y lo implementamos.
       </p>
 
       {status === 'idle' && (
@@ -51,12 +66,12 @@ export default function SolicitudCard({ tipo }) {
       )}
 
       {status === 'loading' && (
-        <p className="solicitud-feedback">Enviando solicitud…</p>
+        <p className="solicitud-feedback">Enviando…</p>
       )}
 
       {status === 'done' && (
         <p className="solicitud-feedback solicitud-ok">
-          ✓ Solicitud enviada. La IA se pondrá manos a la obra en breve.
+          ✓ Solicitud enviada. En breve nos ponemos con ello.
         </p>
       )}
 
