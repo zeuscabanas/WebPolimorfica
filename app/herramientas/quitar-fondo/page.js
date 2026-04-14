@@ -6,6 +6,7 @@ export default function QuitarFondoPage() {
   const [result, setResult]     = useState(null);
   const [status, setStatus]     = useState('idle'); // idle | loading | done | error
   const [progress, setProgress] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef();
 
@@ -31,6 +32,7 @@ export default function QuitarFondoPage() {
       setStatus('done');
     } catch (e) {
       console.error(e);
+      setErrorMsg(e?.message || String(e));
       setStatus('error');
     }
   }, []);
@@ -99,7 +101,12 @@ export default function QuitarFondoPage() {
 
       {status === 'error' && (
         <div className="tool-error">
-          <p>Algo salió mal. Prueba con otra imagen.</p>
+          <p>Algo salió mal procesando la imagen.</p>
+          {errorMsg && (
+            <pre style={{ fontSize: '0.75rem', color: '#f87171', background: '#1a1d27', padding: '12px', borderRadius: '8px', maxWidth: '100%', overflowX: 'auto', textAlign: 'left', marginTop: '8px' }}>
+              {errorMsg}
+            </pre>
+          )}
           <button className="btn-primary" onClick={onReset}>Volver a intentar</button>
         </div>
       )}
