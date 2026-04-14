@@ -1202,3 +1202,24 @@ a {
 }
 .solicitud-ok { color: #22c55e; }
 .solicitud-err { color: #f87171; }
+
+.solicitud-key-row {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.solicitud-key-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: monospace;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.solicitud-key-input:focus { border-color: var(--accent); }
+.solicitud-key-hint {
+  font-size: 0.75rem; color: var(--text-muted);
+}
