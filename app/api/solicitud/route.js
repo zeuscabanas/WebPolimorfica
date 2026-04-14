@@ -19,12 +19,15 @@ export async function POST(req) {
     auth: { user, pass },
   });
 
+  const subject = tipo === 'juego'
+    ? 'mejoras_polimorfico_juegos'
+    : 'mejoras_polimorfico_herramientas';
   const emoji = tipo === 'juego' ? '🎮' : '🛠️';
 
   await transporter.sendMail({
-    from: `"Portfolio Solicitudes" <${user}>`,
+    from: `"Portfolio" <${user}>`,
     to: user,
-    subject: `${emoji} Nueva solicitud de ${tipo}: ${descripcion.trim().slice(0, 60)}`,
+    subject,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:auto;background:#0f1117;color:#e2e8f0;border-radius:12px;padding:32px;">
         <h2 style="color:#6c63ff;margin-top:0;">${emoji} Nueva solicitud de ${tipo}</h2>
