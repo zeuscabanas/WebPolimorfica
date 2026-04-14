@@ -12,6 +12,12 @@ const tools = [
     name: 'Quitar fondo',
     desc: 'Elimina el fondo de cualquier imagen en segundos. Funciona en el navegador, sin subir nada a ningún servidor.',
   },
+  {
+    href: '/herramientas/youtube-mp3',
+    icon: '🎵',
+    name: 'YouTube → MP3',
+    desc: 'Pega la URL de cualquier vídeo de YouTube y descarga el audio en MP3. Máx. 20 minutos.',
+  },
 ];
 
 export default function HerramientasPage() {
