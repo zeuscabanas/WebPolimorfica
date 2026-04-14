@@ -14,7 +14,7 @@ const CV = {
     { value: '3+', label: 'Años de experiencia' },
     { value: '12+', label: 'Tecnologías' },
     { value: '3', label: 'Empresas' },
-    { value: '4+', label: 'Proyectos propios' },
+    { value: '5+', label: 'Proyectos propios' },
   ],
   experience: [
     {
@@ -67,6 +67,13 @@ const CV = {
     { name: 'PyTorch / TF', level: 25, cat: 'IA' },
   ],
   projects: [
+    {
+      name: 'DeployFast',
+      desc: 'Plataforma PaaS de despliegue continuo desde GitHub. Soporta Next.js, Python, Go, Ruby y cualquier proyecto con Dockerfile. Genera configuración automáticamente, gestiona variables de entorno y permite dominios personalizados con SSL.',
+      tags: ['PaaS', 'Docker', 'DevOps', 'SaaS'],
+      icon: '🚀',
+      link: 'https://deployfast.app',
+    },
     {
       name: 'WebPolimorfica',
       desc: 'Plataforma web personal con despliegue automático desde GitHub. Incluye juegos interactivos en el navegador (Tetris, Ajedrez, Buscaminas…) y pipeline CI/CD completo con Docker.',
