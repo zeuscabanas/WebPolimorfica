@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "@imgly/background-removal": "^1.4.5",
     "@imgly/background-removal-data": "^1.4.5",
     "next": "14.2.3",
