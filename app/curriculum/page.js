@@ -121,7 +121,7 @@ export default function Curriculum() {
 
       {/* ── HERO ── */}
       <section className="cv-hero cv-reveal">
-        <div className="cv-avatar">{CV.name.split(' ').map(w => w[0]).join('')}</div>
+        <img src="/cc-logo.svg" className="cv-avatar" alt="CC" />
         <div className="cv-hero-text">
           <h1 className="cv-name">{CV.name}</h1>
           <p className="cv-title-badge">{CV.title}</p>
