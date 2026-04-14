@@ -18,6 +18,12 @@ const tools = [
     name: 'YouTube → MP3',
     desc: 'Pega la URL de cualquier vídeo de YouTube y descarga el audio en MP3. Máx. 20 minutos.',
   },
+  {
+    href: '/herramientas/viajes',
+    icon: '🗺️',
+    name: 'Organizador de viajes',
+    desc: 'Planifica tus viajes con itinerario, lugares, transporte, checklist y gastos. Login con Google.',
+  },
 ];
 
 export default function HerramientasPage() {

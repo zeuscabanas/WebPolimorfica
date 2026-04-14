@@ -1266,3 +1266,11 @@ a {
   .yt-card { flex-direction: column; }
   .yt-thumb { width: 100%; height: 180px; }
 }
+select.yt-input option {
+  background: var(--bg, #0f0f0f);
+  color: var(--text, #f0f0f0);
+}
+textarea.yt-input {
+  min-height: 72px;
+  line-height: 1.5;
+}
