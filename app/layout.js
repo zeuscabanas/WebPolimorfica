@@ -4,6 +4,11 @@ import NavLink from './components/NavLink';
 export const metadata = {
   title: 'WebPolimorfica',
   description: 'Una web viva. Cada nueva función se despliega automáticamente desde GitHub.',
+  icons: {
+    icon: '/cc-logo.svg',
+    shortcut: '/cc-logo.svg',
+    apple: '/cc-logo.svg',
+  },
 };
 
 export default function RootLayout({ children }) {
