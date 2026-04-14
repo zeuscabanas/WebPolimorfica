@@ -9,7 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@imgly/background-removal": "^1.7.0",
+    "@imgly/background-removal": "^1.4.5",
+    "@imgly/background-removal-data": "^1.4.5",
     "next": "14.2.3",
     "nodemailer": "^8.0.5",
     "react": "^18",
