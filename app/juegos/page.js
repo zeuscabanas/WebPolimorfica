@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import SolicitudCard from '../components/SolicitudCard';
 
 export const metadata = {
-  title: 'Juegos — WebPolimorfica',
+  title: 'Juegos — César Cabanas',
 };
 
 export default function JuegosPage() {
@@ -49,6 +50,8 @@ export default function JuegosPage() {
           </div>
         </Link>
       </div>
+
+      <SolicitudCard tipo="juego" />
     </>
   );
 }
