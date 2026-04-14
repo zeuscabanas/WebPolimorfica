@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 const CV = {
   name: 'César Cabanas',
   title: 'Salesforce Developer & Full Stack',
-  about: 'Desarrollador con más de 3 años de experiencia especializado en Salesforce, con base sólida en Python, Java y desarrollo web. Apasionado por la automatización y la inteligencia artificial, siempre buscando aplicar tecnología para resolver problemas reales de forma eficiente.',
+  about: 'Desarrollador con más de 3 años de experiencia en Salesforce, especializado en Apex y Lightning Web Components para clientes empresariales. Versátil en el stack completo: backends en Python y Java, interfaces modernas con React y Next.js, y pipelines de despliegue automático con Docker. Me gusta construir cosas de principio a fin — desde la lógica de negocio hasta que el proyecto está corriendo en producción.',
   contact: {
     email: 'ccabanasurbina@gmail.com',
     phone: '+34 648 747 761',
@@ -12,9 +12,9 @@ const CV = {
   },
   stats: [
     { value: '3+', label: 'Años de experiencia' },
-    { value: '10+', label: 'Tecnologías' },
+    { value: '12+', label: 'Tecnologías' },
     { value: '3', label: 'Empresas' },
-    { value: '2', label: 'Proyectos propios' },
+    { value: '4+', label: 'Proyectos propios' },
   ],
   experience: [
     {
@@ -22,7 +22,7 @@ const CV = {
       role: 'Desarrollador Salesforce',
       period: 'Marzo 2023 – Actualidad',
       current: true,
-      desc: 'Desarrollo y mantenimiento de soluciones Salesforce para clientes empresariales. Implementación de flujos automatizados, desarrollo en Apex y Lightning Web Components.',
+      desc: 'Desarrollo y mantenimiento de soluciones Salesforce para clientes de gran cuenta. Implementación de automatizaciones con Flow Builder, desarrollo backend en Apex y componentes frontend con Lightning Web Components.',
       color: '#6c63ff',
     },
     {
@@ -30,7 +30,7 @@ const CV = {
       role: 'Soporte Salesforce & Desarrollo de Aplicaciones',
       period: 'Marzo 2022 – Junio 2022',
       current: false,
-      desc: 'Soporte técnico en plataforma Salesforce y colaboración en el desarrollo de aplicaciones internas para el equipo.',
+      desc: 'Soporte técnico sobre plataforma Salesforce y desarrollo de herramientas internas para optimizar procesos del equipo.',
       color: '#a855f7',
     },
     {
@@ -38,7 +38,7 @@ const CV = {
       role: 'Técnico de Laboratorio de Recuperación de Datos',
       period: 'Veranos 2017 – 2020',
       current: false,
-      desc: 'Recuperación de datos en entornos de laboratorio especializado, trabajando con sistemas de almacenamiento dañados.',
+      desc: 'Recuperación de datos en entorno de laboratorio especializado, trabajando con sistemas de almacenamiento dañados a nivel físico y lógico.',
       color: '#3b82f6',
     },
   ],
@@ -59,31 +59,39 @@ const CV = {
     { name: 'Python', level: 80, cat: 'Backend' },
     { name: 'Java', level: 70, cat: 'Backend' },
     { name: 'SQL', level: 70, cat: 'Datos' },
-    { name: 'HTML', level: 80, cat: 'Frontend' },
+    { name: 'HTML / CSS', level: 75, cat: 'Frontend' },
+    { name: 'JavaScript', level: 60, cat: 'Frontend' },
+    { name: 'React / Next.js', level: 60, cat: 'Frontend' },
     { name: 'MongoDB', level: 60, cat: 'Datos' },
-    { name: 'JavaScript', level: 40, cat: 'Frontend' },
-    { name: 'CSS', level: 40, cat: 'Frontend' },
-    { name: 'PyTorch / TF', level: 20, cat: 'IA' },
+    { name: 'Docker / CI-CD', level: 60, cat: 'DevOps' },
+    { name: 'PyTorch / TF', level: 25, cat: 'IA' },
   ],
   projects: [
     {
+      name: 'WebPolimorfica',
+      desc: 'Plataforma web personal con despliegue automático desde GitHub. Incluye juegos interactivos en el navegador (Tetris, Ajedrez, Buscaminas…) y pipeline CI/CD completo con Docker.',
+      tags: ['Next.js', 'React', 'Docker', 'CI/CD'],
+      icon: '🌐',
+      link: 'https://github.com/zeuscabanas/WebPolimorfica',
+    },
+    {
       name: 'Uri Project',
-      desc: 'Plataforma web para gestionar servicios de música en locales. Desarrollo full stack con gestión de usuarios y servicios.',
+      desc: 'Plataforma web para gestionar servicios de música en locales. Desarrollo full stack con autenticación, gestión de usuarios y panel de administración.',
       tags: ['JavaScript', 'Web', 'Full Stack'],
       icon: '🎵',
     },
     {
-      name: 'Visión Artificial',
-      desc: 'Sistema para el entrenamiento y despliegue de modelos de reconocimiento de imágenes usando deep learning.',
-      tags: ['Python', 'IA', 'Computer Vision'],
-      icon: '👁',
-    },
-    {
       name: 'RatónArtificial',
-      desc: 'Herramienta de automatización inteligente en Python. Proyecto open source publicado en GitHub.',
+      desc: 'Herramienta de automatización inteligente en Python para control del ratón mediante visión por computador. Proyecto open source publicado en GitHub.',
       tags: ['Python', 'Automatización', 'IA'],
       icon: '🤖',
       link: 'https://github.com/zeuscabanas/RatonArtificial',
+    },
+    {
+      name: 'Visión Artificial',
+      desc: 'Sistema de entrenamiento y despliegue de modelos de reconocimiento de imágenes usando deep learning con PyTorch.',
+      tags: ['Python', 'IA', 'Computer Vision'],
+      icon: '👁',
     },
   ],
 };
