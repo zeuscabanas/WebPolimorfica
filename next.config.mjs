@@ -12,6 +12,18 @@ const nextConfig = {
     });
     return config;
   },
+  async headers() {
+    return [
+      {
+        // SharedArrayBuffer required by onnxruntime-web (used by @imgly/background-removal)
+        source: '/herramientas/quitar-fondo',
+        headers: [
+          { key: 'Cross-Origin-Opener-Policy',   value: 'same-origin' },
+          { key: 'Cross-Origin-Embedder-Policy',  value: 'credentialless' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
