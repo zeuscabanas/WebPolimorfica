@@ -21,6 +21,7 @@ export default function QuitarFondoPage() {
       const { removeBackground } = await import('@imgly/background-removal');
       setProgress('Procesando imagen…');
       const blob = await removeBackground(file, {
+        publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/',
         progress: (key, current, total) => {
           if (key.startsWith('fetch:')) {
             const pct = Math.round((current / total) * 100);
