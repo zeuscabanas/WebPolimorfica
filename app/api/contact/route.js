@@ -7,8 +7,8 @@ export async function POST(req) {
     return Response.json({ error: 'Faltan campos obligatorios.' }, { status: 400 });
   }
 
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_PASS;
+  const user = process.env['GMAIL_USER'];
+  const pass = process.env['GMAIL_PASS'];
 
   if (!user || !pass) {
     return Response.json({ error: 'Servidor de correo no configurado.' }, { status: 503 });
