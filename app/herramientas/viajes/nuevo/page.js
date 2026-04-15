@@ -11,7 +11,6 @@ export default function NuevoViajePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
   const router = useRouter();
-  const supabase = createClient();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,6 +18,7 @@ export default function NuevoViajePage() {
     setLoading(true);
     setError('');
 
+    const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const { data, error: err } = await supabase.from('trips').insert({
       user_id:     user.id,
