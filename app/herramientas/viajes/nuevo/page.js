@@ -20,6 +20,7 @@ export default function NuevoViajePage() {
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setError('Sesión expirada. Vuelve a iniciar sesión.'); setLoading(false); return; }
     const { data, error: err } = await supabase.from('trips').insert({
       user_id:     user.id,
       name:        form.name.trim(),

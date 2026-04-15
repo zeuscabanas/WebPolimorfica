@@ -5,10 +5,10 @@ import { useState } from 'react';
 
 export default function DeleteTripButton({ tripId }) {
   const [confirm, setConfirm] = useState(false);
-  const supabase = createClient();
-  const router   = useRouter();
+  const router = useRouter();
 
   const handleDelete = async () => {
+    const supabase = createClient();
     await supabase.from('trips').delete().eq('id', tripId);
     router.push('/herramientas/viajes');
     router.refresh();

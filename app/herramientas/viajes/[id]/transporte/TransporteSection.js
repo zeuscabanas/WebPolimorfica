@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createClient } from '../../../../../lib/supabase/client';
 
 const TYPES = [
@@ -18,7 +18,7 @@ export default function TransporteSection({ tripId, initialTransport }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm]       = useState({ type: 'flight', from_location: '', to_location: '', departure_date: '', departure_time: '', arrival_date: '', arrival_time: '', company: '', booking_ref: '', notes: '' });
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const toISO = (date, time) => {
     if (!date) return null;

@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -6,15 +7,20 @@ import { Suspense } from 'react';
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
+  const [loginError, setLoginError] = useState('');
 
   const handleGoogleLogin = async () => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    setLoginError('');
+    try {
+      const supabase = createClient();
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (err) setLoginError(err.message);
+    } catch (e) {
+      setLoginError(e.message ?? 'Error desconocido. Comprueba la consola.');
+    }
   };
 
   return (
@@ -28,9 +34,9 @@ function LoginContent() {
           Organiza tus viajes, comparte planes y lleva todo bajo control.
         </p>
 
-        {error && (
+        {(error || loginError) && (
           <p style={{ color: 'var(--accent)', marginBottom: '16px', fontSize: '14px' }}>
-            Ha habido un error al iniciar sesión. Inténtalo de nuevo.
+            {loginError || 'Ha habido un error al iniciar sesión. Inténtalo de nuevo.'}
           </p>
         )}
 

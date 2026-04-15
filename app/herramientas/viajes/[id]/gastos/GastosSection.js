@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createClient } from '../../../../../lib/supabase/client';
 
 const CURRENCIES = ['EUR','USD','GBP','JPY','MXN','ARS','CLP','COP','BRL'];
@@ -9,7 +9,7 @@ export default function GastosSection({ tripId, initialExpenses, userId }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm]         = useState({ description: '', amount: '', currency: 'EUR', date: '' });
   const [loading, setLoading]   = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const handleAdd = async (e) => {
     e.preventDefault();

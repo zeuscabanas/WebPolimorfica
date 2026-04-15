@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createClient } from '../../../../../lib/supabase/client';
 
 export default function ItinerarioSection({ tripId, initialItems }) {
@@ -7,7 +7,7 @@ export default function ItinerarioSection({ tripId, initialItems }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm]     = useState({ date: '', time: '', title: '', description: '' });
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const grouped = items.reduce((acc, item) => {
     const key = item.date ?? 'sin-fecha';

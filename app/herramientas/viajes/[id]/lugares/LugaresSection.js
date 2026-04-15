@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createClient } from '../../../../../lib/supabase/client';
 
 const TYPES = [
@@ -17,7 +17,7 @@ export default function LugaresSection({ tripId, initialPlaces }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm]       = useState({ name: '', type: 'attraction', address: '', url: '', notes: '', date: '', confirmed: false });
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const handleAdd = async (e) => {
     e.preventDefault();

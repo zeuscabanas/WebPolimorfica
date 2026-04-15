@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createClient } from '../../../../../lib/supabase/client';
 
 const DEFAULT_ITEMS = [
@@ -12,7 +12,7 @@ export default function ChecklistSection({ tripId, initialItems }) {
   const [items, setItems]   = useState(initialItems);
   const [newItem, setNewItem] = useState('');
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const handleAdd = async (e) => {
     e.preventDefault();
