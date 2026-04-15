@@ -12,11 +12,9 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  const sbScript = `window.__SB_URL__=${JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_URL||'')};window.__SB_KEY__=${JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||'')};`;
   return (
     <html lang="es">
       <body>
-        <script dangerouslySetInnerHTML={{ __html: sbScript }} />
         <header className="site-header">
           <div className="header-inner">
             <span className="logo">César Cabanas</span>
