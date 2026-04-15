@@ -6,9 +6,9 @@ import { Suspense } from 'react';
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
-  const supabase = createClient();
 
   const handleGoogleLogin = async () => {
+    const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

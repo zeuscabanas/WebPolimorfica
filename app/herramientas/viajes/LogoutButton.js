@@ -3,10 +3,10 @@ import { createClient } from '../../../lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function LogoutButton() {
-  const supabase = createClient();
-  const router   = useRouter();
+  const router = useRouter();
 
   const handleLogout = async () => {
+    const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/herramientas/viajes/login');
     router.refresh();
