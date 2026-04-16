@@ -18,6 +18,12 @@ const tools = [
     name: 'YouTube → MP3',
     desc: 'Pega la URL de cualquier vídeo de YouTube y descarga el audio en MP3. Máx. 20 minutos.',
   },
+  {
+    href: '/herramientas/buscar-emails',
+    icon: '📧',
+    name: 'Buscar emails',
+    desc: 'Pega la URL de cualquier página web y extrae todos los correos electrónicos que aparezcan en ella.',
+  },
 ];
 
 export default function HerramientasPage() {
