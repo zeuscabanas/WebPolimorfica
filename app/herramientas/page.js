@@ -24,6 +24,12 @@ const tools = [
     name: 'Buscar emails',
     desc: 'Pega la URL de cualquier página web y extrae todos los correos electrónicos que aparezcan en ella.',
   },
+  {
+    href: '/herramientas/buscar-persona-email',
+    icon: '🕵️',
+    name: 'Buscar email de persona',
+    desc: 'Introduce el nombre y apellido de alguien y buscamos su email analizando múltiples fuentes en Internet.',
+  },
 ];
 
 export default function HerramientasPage() {
