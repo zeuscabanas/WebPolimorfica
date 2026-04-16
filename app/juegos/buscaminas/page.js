@@ -61,6 +61,17 @@ function floodReveal(board, startR, startC, rows, cols) {
   return b;
 }
 
+function getNeighbors(r, c, rows, cols) {
+  const result = [];
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) result.push([nr, nc]);
+    }
+  return result;
+}
+
 export default function Buscaminas() {
   const [difficulty, setDifficulty] = useState('facil');
   const [board, setBoard] = useState(() => makeEmpty(9, 9));
@@ -92,7 +103,35 @@ export default function Buscaminas() {
 
   const handleClick = useCallback((r, c) => {
     if (gameState === 'won' || gameState === 'lost') return;
-    if (board[r][c].flagged || board[r][c].revealed) return;
+    if (board[r][c].flagged) return;
+
+    // Chord click: celda ya revelada con número + suficientes banderas vecinas
+    if (board[r][c].revealed) {
+      if (gameState !== 'playing' || board[r][c].count === 0) return;
+      const nbrs = getNeighbors(r, c, config.rows, config.cols);
+      const flagged = nbrs.filter(([nr, nc]) => board[nr][nc].flagged).length;
+      if (flagged !== board[r][c].count) return;
+
+      let workBoard = board;
+      let hitMine = false;
+      for (const [nr, nc] of nbrs) {
+        if (!workBoard[nr][nc].revealed && !workBoard[nr][nc].flagged) {
+          if (workBoard[nr][nc].mine) hitMine = true;
+          workBoard = floodReveal(workBoard, nr, nc, config.rows, config.cols);
+        }
+      }
+      if (hitMine) {
+        setBoard(workBoard.map(row =>
+          row.map(cell => ({ ...cell, revealed: cell.mine ? true : cell.revealed }))
+        ));
+        setGameState('lost');
+        return;
+      }
+      const hidden = workBoard.flat().filter(cell => !cell.revealed && !cell.mine).length;
+      setBoard(workBoard);
+      setGameState(hidden === 0 ? 'won' : 'playing');
+      return;
+    }
 
     let workBoard = board;
     let nextState = gameState;
