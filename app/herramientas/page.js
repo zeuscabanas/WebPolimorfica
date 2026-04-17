@@ -13,6 +13,8 @@ export default function HerramientasPage() {
     { href: '/herramientas/youtube-mp3',          icon: '🎵', ...t.youtubeMp3 },
     { href: '/herramientas/buscar-emails',        icon: '📧', ...t.buscarEmails },
     { href: '/herramientas/buscar-persona-email', icon: '🕵️', ...t.buscarPersonaEmail },
+    { href: '/herramientas/leer-qr',             icon: '📷', ...t.leerQr },
+    { href: '/herramientas/generar-qr',          icon: '⬛', ...t.generarQr },
   ];
 
   return (

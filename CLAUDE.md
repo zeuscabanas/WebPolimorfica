@@ -108,6 +108,8 @@ en: {
 | `youtubeMp3` | `app/herramientas/youtube-mp3/page.js` |
 | `buscarEmails` | `app/herramientas/buscar-emails/page.js` |
 | `buscarPersonaEmail` | `app/herramientas/buscar-persona-email/page.js` |
+| `leerQr` | `app/herramientas/leer-qr/page.js` |
+| `generarQr` | `app/herramientas/generar-qr/page.js` |
 | `curriculum` | `app/curriculum/page.js` |
 
 ## Project Structure
