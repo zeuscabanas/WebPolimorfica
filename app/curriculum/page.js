@@ -10,6 +10,7 @@ const CV = {
     email: 'ccabanasurbina@gmail.com',
     phone: '+34 648 747 761',
     github: 'https://github.com/zeuscabanas',
+    linkedin: 'https://www.linkedin.com/in/c%C3%A9sar-cabanas-818593177/',
   },
   stats: [
     { value: '3+', label: 'Años de experiencia' },
@@ -133,6 +134,7 @@ export default function Curriculum() {
             <a href={`mailto:${CV.contact.email}`} className="cv-chip">✉ {CV.contact.email}</a>
             <a href={`tel:${CV.contact.phone.replace(/\s/g,'')}`} className="cv-chip">📞 {CV.contact.phone}</a>
             <a href={CV.contact.github} target="_blank" rel="noreferrer" className="cv-chip">⌥ GitHub</a>
+            <a href={CV.contact.linkedin} target="_blank" rel="noreferrer" className="cv-chip">🔗 LinkedIn</a>
           </div>
         </div>
       </section>
