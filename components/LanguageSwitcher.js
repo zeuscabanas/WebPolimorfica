@@ -9,7 +9,7 @@ export default function LanguageSwitcher() {
   const { locale, setLocale } = useLocale();
 
   return (
-    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+    <div className="lang-switcher" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
       {LOCALES.map(l => (
         <button
           key={l}

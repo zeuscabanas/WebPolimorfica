@@ -36,14 +36,13 @@ export default function BuscarEmailsPage() {
         <p className="subtitle">{t.subtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', maxWidth: '680px', flexWrap: 'wrap' }}>
+      <form onSubmit={handleSubmit} className="be-form">
         <input
           className="yt-input"
           type="text"
           placeholder={t.placeholder}
           value={url}
           onChange={e => setUrl(e.target.value)}
-          style={{ flex: 1, minWidth: '260px' }}
           disabled={loading}
         />
         <button type="submit" className="btn-primary" disabled={loading || !url.trim()}>

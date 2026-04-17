@@ -187,10 +187,7 @@ a {
 }
 
 /* ── Responsive ── */
-@media (max-width: 600px) {
-  .header-inner { gap: 16px; }
-  .content { padding: 40px 16px; }
-}
+/* (ver sección MOBILE completa al final del archivo) */
 
 /* ============================================================
    Juegos — estilos compartidos
@@ -1273,4 +1270,301 @@ select.yt-input option {
 textarea.yt-input {
   min-height: 72px;
   line-height: 1.5;
+}
+
+/* ── Buscar emails form ── */
+.be-form {
+  display: flex;
+  gap: 10px;
+  max-width: 680px;
+  flex-wrap: wrap;
+}
+.be-form .yt-input { flex: 1; min-width: 220px; }
+
+/* ============================================================
+   MOBILE — Responsive completo
+   Breakpoint principal: 640px
+   ============================================================ */
+
+/* Touch UX baseline — sin destello azul al tocar */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Evitar zoom de iOS al enfocar inputs */
+@media (max-width: 640px) {
+  input, textarea, select { font-size: 16px !important; }
+}
+
+@media (max-width: 640px) {
+
+  /* ────── Header: 2 filas en móvil ────── */
+  /* Fila 1: logo + lang-switcher          */
+  /* Fila 2: nav links (scroll horizontal) */
+  .header-inner {
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    padding: 0 16px;
+    gap: 0;
+    align-items: center;
+  }
+  .logo {
+    flex: 1;
+    font-size: 1rem;
+    padding: 10px 0;
+  }
+  .lang-switcher {
+    padding: 10px 0;
+  }
+  .main-nav {
+    order: 3;
+    width: calc(100% + 32px);
+    margin-left: -16px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 16px 10px;
+    gap: 2px;
+    border-top: 1px solid var(--border);
+  }
+  .main-nav::-webkit-scrollbar { display: none; }
+  .nav-link {
+    white-space: nowrap;
+    font-size: 0.82rem;
+    padding: 8px 14px;
+  }
+
+  /* ────── Contenido principal ────── */
+  .content {
+    padding: 24px 16px 52px;
+  }
+
+  /* ────── Hero ────── */
+  .hero {
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    font-size: 0.93rem;
+    margin-bottom: 14px;
+  }
+  .badge {
+    font-size: 0.74rem;
+    padding: 5px 12px;
+  }
+
+  /* ────── Cards: lista horizontal en móvil ────── */
+  /* (icono a la izq, texto a la derecha — más natural en scroll vertical) */
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .card {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+  }
+  .card-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    width: 30px;
+    text-align: center;
+    margin-top: 2px;
+  }
+  .card h3 {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+  }
+  .card p {
+    font-size: 0.83rem;
+  }
+
+  /* ────── Botones: táctiles más grandes ────── */
+  .btn-primary,
+  .btn-secondary {
+    min-height: 48px;
+    font-size: 0.9rem;
+    padding: 11px 20px;
+  }
+  .btn-game {
+    min-height: 44px;
+    padding: 10px 22px;
+  }
+
+  /* ────── Páginas de herramientas ────── */
+  .tool-page {
+    padding: 0 16px 48px;
+  }
+  .tool-header {
+    margin-bottom: 24px;
+  }
+  .tool-header h1 {
+    font-size: clamp(1.3rem, 6vw, 1.8rem);
+  }
+  /* Drop zone full-bleed (borde a borde) */
+  .drop-zone {
+    padding: 48px 20px;
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  .tool-loading { padding: 44px 20px; }
+  .tool-error   { padding: 32px 16px; }
+
+  /* ── Formularios de búsqueda ── */
+  .yt-form,
+  .be-form {
+    flex-direction: column;
+    max-width: 100%;
+    margin-bottom: 20px;
+    gap: 8px;
+  }
+  .yt-form .btn-primary,
+  .be-form .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .yt-input,
+  .be-form .yt-input {
+    min-width: unset;
+    width: 100%;
+  }
+
+  /* ── Solicitud card: edge-to-edge en móvil ── */
+  .solicitud-card {
+    margin-top: 40px;
+    padding: 28px 20px;
+    margin-left: -16px;
+    margin-right: -16px;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+  }
+  .solicitud-btn { min-height: 48px; }
+
+  /* ────── Juegos ────── */
+  .game-title {
+    font-size: 1.35rem;
+    margin-bottom: 14px;
+  }
+  .game-hint {
+    font-size: 0.78rem;
+    margin-top: 12px;
+  }
+  .ms-panel {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .ms-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Chess y C4 — scroll si no cabe */
+  .chess-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+  .c4-board {
+    overflow-x: auto;
+  }
+
+  /* ────── Currículum ────── */
+  .cv-hero {
+    padding: 22px 18px;
+    gap: 18px;
+  }
+  .cv-avatar {
+    width: 66px;
+    height: 66px;
+    border-radius: 14px;
+  }
+  .cv-name {
+    font-size: 1.7rem;
+  }
+  .cv-about {
+    font-size: 0.88rem;
+  }
+  .cv-contact-row {
+    gap: 6px;
+  }
+  .cv-chip {
+    font-size: 0.74rem;
+    padding: 5px 10px;
+  }
+  .cv-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .cv-stat {
+    padding: 14px 10px;
+  }
+  .cv-stat-value {
+    font-size: 1.5rem;
+  }
+  .cv-stat-label {
+    font-size: 0.7rem;
+  }
+  .cv-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+  }
+  .cv-tl-body {
+    padding: 14px 14px;
+  }
+  /* Periodo debajo del título (no al lado), más legible */
+  .cv-tl-header {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cv-tl-period {
+    white-space: normal;
+    font-size: 0.72rem;
+    opacity: 0.55;
+  }
+  .cv-tl-desc {
+    font-size: 0.83rem;
+  }
+  .cv-project-card {
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  .cv-project-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 1.3rem;
+    border-radius: 8px;
+  }
+  .cv-project-desc {
+    font-size: 0.83rem;
+  }
+  .cv-skills {
+    gap: 10px;
+  }
+
+  /* ── Formulario de contacto CV ── */
+  .cv-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Pantallas muy pequeñas (≤400px): ajedrez más pequeño ── */
+@media (max-width: 400px) {
+  .chess-board {
+    grid-template-columns: repeat(8, 36px);
+    grid-template-rows: repeat(8, 36px);
+  }
+  .chess-sq { width: 36px; height: 36px; }
+  .cp { font-size: 1.5rem; }
+  .dot { width: 12px; height: 12px; }
+  .dot.cap { width: 32px; height: 32px; border-width: 3px; }
 }
