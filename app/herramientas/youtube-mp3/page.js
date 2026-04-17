@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import { useT } from '../../../components/LocaleProvider';
 
 export default function YoutubeMp3Page() {
+  const t = useT('youtubeMp3');
   const [url, setUrl]       = useState('');
   const [info, setInfo]     = useState(null);
   const [status, setStatus] = useState('idle'); // idle | loading | ready | error
@@ -31,10 +33,8 @@ export default function YoutubeMp3Page() {
   return (
     <div className="tool-page">
       <div className="tool-header">
-        <h1>🎵 <span className="highlight">YouTube → MP3</span></h1>
-        <p className="subtitle">
-          Pega la URL de cualquier vídeo y descarga el audio en MP3. Máx. 20 min.
-        </p>
+        <h1><span className="highlight">{t.title}</span></h1>
+        <p className="subtitle">{t.subtitle}</p>
       </div>
 
       <form onSubmit={fetchInfo} className="yt-form">
@@ -43,11 +43,11 @@ export default function YoutubeMp3Page() {
           type="url"
           value={url}
           onChange={e => { setUrl(e.target.value); setStatus('idle'); setInfo(null); }}
-          placeholder="https://www.youtube.com/watch?v=..."
+          placeholder={t.placeholder}
           required
         />
         <button type="submit" className="btn-primary" disabled={status === 'loading'}>
-          {status === 'loading' ? 'Cargando…' : 'Obtener info'}
+          {status === 'loading' ? t.loading : t.fetch}
         </button>
       </form>
 
@@ -67,10 +67,10 @@ export default function YoutubeMp3Page() {
             </div>
           </div>
           <a href={downloadUrl} className="btn-primary yt-dl-btn">
-            ⬇ Descargar MP3
+            {t.download}
           </a>
           <p className="drop-hint" style={{ textAlign: 'center', marginTop: '8px' }}>
-            La conversión puede tardar unos segundos según la duración del vídeo.
+            {t.hint}
           </p>
         </div>
       )}

@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useT } from '../../../components/LocaleProvider';
 
 const CONFIGS = {
-  facil:   { rows: 9,  cols: 9,  mines: 10, label: 'Fácil' },
-  medio:   { rows: 16, cols: 16, mines: 40, label: 'Medio' },
-  dificil: { rows: 16, cols: 30, mines: 99, label: 'Difícil' },
+  facil:   { rows: 9,  cols: 9,  mines: 10 },
+  medio:   { rows: 16, cols: 16, mines: 40 },
+  dificil: { rows: 16, cols: 30, mines: 99 },
 };
 
 const NUM_COLORS = { 1:'#2563eb', 2:'#16a34a', 3:'#dc2626', 4:'#7c3aed', 5:'#b91c1c', 6:'#0891b2', 7:'#111827', 8:'#6b7280' };
@@ -73,6 +74,7 @@ function getNeighbors(r, c, rows, cols) {
 }
 
 export default function Buscaminas() {
+  const t = useT('buscaminas');
   const [difficulty, setDifficulty] = useState('facil');
   const [board, setBoard] = useState(() => makeEmpty(9, 9));
   const [gameState, setGameState] = useState('idle');
@@ -169,16 +171,16 @@ export default function Buscaminas() {
 
   return (
     <div className="game-container">
-      <h1 className="game-title">💣 Buscaminas</h1>
+      <h1 className="game-title">{t.title}</h1>
 
       <div className="ms-controls">
-        {Object.entries(CONFIGS).map(([key, cfg]) => (
+        {Object.entries(CONFIGS).map(([key]) => (
           <button
             key={key}
             className={`btn-diff${difficulty === key ? ' active' : ''}`}
             onClick={() => startNewGame(key)}
           >
-            {cfg.label}
+            {t[key]}
           </button>
         ))}
       </div>
@@ -189,8 +191,8 @@ export default function Buscaminas() {
         <span className="ms-stat">⏱ {String(time).padStart(3, '0')}</span>
       </div>
 
-      {gameState === 'won' && <div className="game-banner win">¡Ganaste! 🎉</div>}
-      {gameState === 'lost' && <div className="game-banner lose">💥 ¡Has pisado una mina!</div>}
+      {gameState === 'won' && <div className="game-banner win">{t.ganaste}</div>}
+      {gameState === 'lost' && <div className="game-banner lose">{t.perdiste}</div>}
 
       <div className="ms-scroll">
         <div className="ms-board" style={{ gridTemplateColumns: `repeat(${config.cols}, 30px)` }}>
@@ -213,7 +215,7 @@ export default function Buscaminas() {
         </div>
       </div>
 
-      <p className="game-hint">Click derecho para colocar bandera 🚩</p>
+      <p className="game-hint">{t.hint}</p>
     </div>
   );
 }

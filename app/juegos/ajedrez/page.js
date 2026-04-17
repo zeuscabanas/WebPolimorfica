@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { useT } from '../../../components/LocaleProvider';
 
 const SYMBOLS = {
   white: { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' },
@@ -187,6 +188,7 @@ const FILES = ['a','b','c','d','e','f','g','h'];
 const RANKS = ['8','7','6','5','4','3','2','1'];
 
 export default function Ajedrez() {
+  const t = useT('ajedrez');
   const [board, setBoard] = useState(initBoard);
   const [turn, setTurn] = useState('white');
   const [selected, setSelected] = useState(null);
@@ -219,12 +221,12 @@ export default function Ajedrez() {
         const inCheck = isInCheck(nb, next);
         const hasMoves = hasAnyLegal(nb, next, nlm, ncr);
         let newStatus = inCheck ? 'check' : 'playing';
-        let newMsg = inCheck ? `¡Jaque a las ${next === 'white' ? 'blancas' : 'negras'}!` : '';
+        let newMsg = inCheck ? (next === 'white' ? t.jaqueBlancas : t.jaqueNegras) : '';
         if (!hasMoves) {
           newStatus = inCheck ? 'checkmate' : 'stalemate';
           newMsg = inCheck
-            ? `¡Jaque mate! Ganan las ${turn === 'white' ? 'blancas' : 'negras'}.`
-            : 'Tablas por ahogado.';
+            ? (turn === 'white' ? t.jaqueMateBlancas : t.jaqueMateNegras)
+            : t.tablas;
         }
         setBoard(nb); setTurn(next); setLastMove(nlm); setCr(ncr);
         setStatus(newStatus); setMessage(newMsg);
@@ -243,15 +245,15 @@ export default function Ajedrez() {
       setSelected([r, c]);
       setValidMoves(getLegalMoves(board, r, c, lastMove, cr));
     }
-  }, [board, turn, selected, validMoves, lastMove, cr, status]);
+  }, [board, turn, selected, validMoves, lastMove, cr, status, t]);
 
   return (
     <div className="game-container">
-      <h1 className="game-title">♟ Ajedrez</h1>
+      <h1 className="game-title">{t.title}</h1>
 
       <div className="chess-info">
         <div className={`chess-turn-indicator ${turn}`}>
-          {turn === 'white' ? '⬜ Turno: Blancas' : '⬛ Turno: Negras'}
+          {turn === 'white' ? t.turnoBlancas : t.turnoNegras}
         </div>
         {message && <div className={`chess-msg ${status}`}>{message}</div>}
       </div>
@@ -296,13 +298,13 @@ export default function Ajedrez() {
 
       <div style={{ textAlign: 'center', marginTop: '16px' }}>
         {(status === 'checkmate' || status === 'stalemate') && (
-          <button className="btn-game" onClick={reset}>Nueva partida</button>
+          <button className="btn-game" onClick={reset}>{t.nueva}</button>
         )}
         {status !== 'checkmate' && status !== 'stalemate' && (
-          <button className="btn-game secondary" onClick={reset}>Reiniciar</button>
+          <button className="btn-game secondary" onClick={reset}>{t.reiniciar}</button>
         )}
       </div>
-      <p className="game-hint">Los peones se promocionan automáticamente a reina.</p>
+      <p className="game-hint">{t.hint}</p>
     </div>
   );
 }

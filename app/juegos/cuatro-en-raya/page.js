@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { useT } from '../../../components/LocaleProvider';
 
 const ROWS = 6;
 const COLS = 7;
@@ -38,6 +39,7 @@ function checkWin(board, row, col, player) {
 }
 
 export default function CuatroEnRaya() {
+  const t = useT('cuatroEnRaya');
   const [board, setBoard] = useState(emptyBoard);
   const [turn, setTurn] = useState(1);
   const [winCells, setWinCells] = useState(null);
@@ -72,24 +74,24 @@ export default function CuatroEnRaya() {
   const winner = winCells ? (turn === 1 ? 2 : 1) : null;
 
   let statusText, statusCls;
-  if (winner)  { statusText = `¡Gana ${winner === 1 ? 'Rojo' : 'Amarillo'}!`; statusCls = `p${winner}`; }
-  else if (isDraw) { statusText = '¡Empate!'; statusCls = 'draw'; }
-  else { statusText = `Turno de ${turn === 1 ? 'Rojo' : 'Amarillo'}`; statusCls = `p${turn}`; }
+  if (winner)  { statusText = `${winner === 1 ? t.p1 : t.p2} ${t.gana}`; statusCls = `p${winner}`; }
+  else if (isDraw) { statusText = t.tablas; statusCls = 'draw'; }
+  else { statusText = `${t.turno}: ${turn === 1 ? t.p1 : t.p2}`; statusCls = `p${turn}`; }
 
   return (
     <div className="game-container" style={{ maxWidth: 520 }}>
-      <h1 className="game-title">🔴 Cuatro en Raya</h1>
+      <h1 className="game-title">{t.title}</h1>
 
       <div className="c4-scores">
         <div className={`c4-score p1${turn === 1 && !winCells && !isDraw ? ' active' : ''}`}>
           <span className="c4-disc p1" />
-          <span className="c4-label">Rojo</span>
+          <span className="c4-label">{t.p1}</span>
           <span className="c4-pts">{scores[1]}</span>
         </div>
         <div className={`c4-status ${statusCls}`}>{statusText}</div>
         <div className={`c4-score p2${turn === 2 && !winCells && !isDraw ? ' active' : ''}`}>
           <span className="c4-disc p2" />
-          <span className="c4-label">Amarillo</span>
+          <span className="c4-label">{t.p2}</span>
           <span className="c4-pts">{scores[2]}</span>
         </div>
       </div>
@@ -133,9 +135,9 @@ export default function CuatroEnRaya() {
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
         {(winCells || isDraw) && (
-          <button className="btn-game" onClick={reset}>Otra partida</button>
+          <button className="btn-game" onClick={reset}>{t.otraPartida}</button>
         )}
-        <button className="btn-game secondary" onClick={resetAll}>Reiniciar todo</button>
+        <button className="btn-game secondary" onClick={resetAll}>{t.reiniciarTodo}</button>
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 'use client';
 import { useState, useRef, useCallback } from 'react';
+import { useT } from '../../../components/LocaleProvider';
 
 export default function QuitarFondoPage() {
+  const t = useT('quitarFondo');
   const [original, setOriginal] = useState(null);
   const [result, setResult]     = useState(null);
   const [status, setStatus]     = useState('idle'); // idle | loading | done | error
@@ -14,19 +16,19 @@ export default function QuitarFondoPage() {
     if (!file || !file.type.startsWith('image/')) return;
     setResult(null);
     setStatus('loading');
-    setProgress('Cargando modelo de IA…');
+    setProgress(t.loadingModel);
     setOriginal(URL.createObjectURL(file));
 
     try {
       const { removeBackground } = await import('@imgly/background-removal');
-      setProgress('Procesando imagen…');
+      setProgress(t.processing);
       const blob = await removeBackground(file, {
         publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/',
         model: 'small',
         progress: (key, current, total) => {
           if (key.startsWith('fetch:')) {
             const pct = Math.round((current / total) * 100);
-            setProgress(`Descargando modelo… ${pct}%`);
+            setProgress(`${t.downloadingModel} ${pct}%`);
           }
         },
       });
@@ -37,7 +39,7 @@ export default function QuitarFondoPage() {
       setErrorMsg(e?.message || String(e));
       setStatus('error');
     }
-  }, []);
+  }, [t]);
 
   const onFileChange = (e) => processFile(e.target.files[0]);
 
@@ -65,10 +67,8 @@ export default function QuitarFondoPage() {
   return (
     <div className="tool-page">
       <div className="tool-header">
-        <h1>✂️ <span className="highlight">Quitar fondo</span></h1>
-        <p className="subtitle">
-          IA en el navegador — la imagen nunca sale de tu dispositivo.
-        </p>
+        <h1><span className="highlight">{t.title}</span></h1>
+        <p className="subtitle">{t.subtitle}</p>
       </div>
 
       {status === 'idle' && (
@@ -80,8 +80,8 @@ export default function QuitarFondoPage() {
           onDrop={onDrop}
         >
           <div className="drop-icon">🖼</div>
-          <p className="drop-label">Arrastra una imagen aquí</p>
-          <p className="drop-sub">o haz clic para seleccionarla</p>
+          <p className="drop-label">{t.drop}</p>
+          <p className="drop-sub">{t.dropSub}</p>
           <p className="drop-hint">JPG, PNG, WEBP — máx. 10 MB</p>
           <input
             ref={inputRef}
@@ -97,19 +97,19 @@ export default function QuitarFondoPage() {
         <div className="tool-loading">
           <div className="spinner" />
           <p>{progress}</p>
-          <p className="drop-hint">La primera vez descarga el modelo (~45 MB). Las siguientes es instantáneo.</p>
+          <p className="drop-hint">{t.modelHint}</p>
         </div>
       )}
 
       {status === 'error' && (
         <div className="tool-error">
-          <p>Algo salió mal procesando la imagen.</p>
+          <p>{t.error}</p>
           {errorMsg && (
             <pre style={{ fontSize: '0.75rem', color: '#f87171', background: '#1a1d27', padding: '12px', borderRadius: '8px', maxWidth: '100%', overflowX: 'auto', textAlign: 'left', marginTop: '8px' }}>
               {errorMsg}
             </pre>
           )}
-          <button className="btn-primary" onClick={onReset}>Volver a intentar</button>
+          <button className="btn-primary" onClick={onReset}>{t.retry}</button>
         </div>
       )}
 
@@ -117,19 +117,19 @@ export default function QuitarFondoPage() {
         <div className="tool-result">
           <div className="result-grid">
             <div className="result-card">
-              <p className="result-label">Original</p>
-              <img src={original} alt="Original" className="result-img" />
+              <p className="result-label">{t.original}</p>
+              <img src={original} alt={t.original} className="result-img" />
             </div>
             <div className="result-card">
-              <p className="result-label">Sin fondo</p>
+              <p className="result-label">{t.result}</p>
               <div className="checker-bg">
-                <img src={result} alt="Sin fondo" className="result-img" />
+                <img src={result} alt={t.result} className="result-img" />
               </div>
             </div>
           </div>
           <div className="result-actions">
-            <button className="btn-primary" onClick={onDownload}>⬇ Descargar PNG</button>
-            <button className="btn-secondary" onClick={onReset}>Nueva imagen</button>
+            <button className="btn-primary" onClick={onDownload}>{t.download}</button>
+            <button className="btn-secondary" onClick={onReset}>{t.newImage}</button>
           </div>
         </div>
       )}

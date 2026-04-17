@@ -1,52 +1,34 @@
 import Link from 'next/link';
 import SolicitudCard from '../components/SolicitudCard';
+import { serverT } from '../../lib/i18n/server';
 
 export const metadata = {
   title: 'Herramientas — César Cabanas',
 };
 
-const tools = [
-  {
-    href: '/herramientas/quitar-fondo',
-    icon: '✂️',
-    name: 'Quitar fondo',
-    desc: 'Elimina el fondo de cualquier imagen en segundos. Funciona en el navegador, sin subir nada a ningún servidor.',
-  },
-  {
-    href: '/herramientas/youtube-mp3',
-    icon: '🎵',
-    name: 'YouTube → MP3',
-    desc: 'Pega la URL de cualquier vídeo de YouTube y descarga el audio en MP3. Máx. 20 minutos.',
-  },
-  {
-    href: '/herramientas/buscar-emails',
-    icon: '📧',
-    name: 'Buscar emails',
-    desc: 'Pega la URL de cualquier página web y extrae todos los correos electrónicos que aparezcan en ella.',
-  },
-  {
-    href: '/herramientas/buscar-persona-email',
-    icon: '🕵️',
-    name: 'Buscar email de persona',
-    desc: 'Introduce el nombre y apellido de alguien y buscamos su email analizando múltiples fuentes en Internet.',
-  },
-];
-
 export default function HerramientasPage() {
+  const t = serverT('herramientas');
+  const tools = [
+    { href: '/herramientas/quitar-fondo',        icon: '✂️', ...t.quitarFondo },
+    { href: '/herramientas/youtube-mp3',          icon: '🎵', ...t.youtubeMp3 },
+    { href: '/herramientas/buscar-emails',        icon: '📧', ...t.buscarEmails },
+    { href: '/herramientas/buscar-persona-email', icon: '🕵️', ...t.buscarPersonaEmail },
+  ];
+
   return (
     <>
       <div className="hero" style={{ marginBottom: '40px' }}>
-        <h1>🛠 <span className="highlight">Herramientas</span></h1>
-        <p className="subtitle">Utilidades que funcionan directamente en el navegador, sin registro ni servidores.</p>
+        <h1>🛠 <span className="highlight">{t.title}</span></h1>
+        <p className="subtitle">{t.subtitle}</p>
       </div>
 
       <div className="cards">
-        {tools.map(t => (
-          <Link key={t.href} href={t.href} style={{ textDecoration: 'none' }}>
+        {tools.map(tool => (
+          <Link key={tool.href} href={tool.href} style={{ textDecoration: 'none' }}>
             <div className="card" style={{ cursor: 'pointer' }}>
-              <div className="card-icon">{t.icon}</div>
-              <h3>{t.name}</h3>
-              <p>{t.desc}</p>
+              <div className="card-icon">{tool.icon}</div>
+              <h3>{tool.name}</h3>
+              <p>{tool.desc}</p>
             </div>
           </Link>
         ))}

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useT } from '../../../components/LocaleProvider';
 
 const COLS = 10;
 const ROWS = 20;
@@ -204,6 +205,7 @@ export default function Tetris() {
     return () => { window.removeEventListener('keydown', onKey); clearInterval(loop.current); };
   }, [move, softDrop, rotate, hardDrop, togglePause]);
 
+  const t = useT('tetris');
   const s = g.current;
   const display = buildDisplay(s.board, s.piece);
 
@@ -224,7 +226,7 @@ export default function Tetris() {
 
   return (
     <div className="game-container" style={{ maxWidth: 400 }}>
-      <h1 className="game-title">🧩 Tetris</h1>
+      <h1 className="game-title">{t.title}</h1>
 
       <div className="tetris-wrap">
         {/* Tablero */}
@@ -232,12 +234,12 @@ export default function Tetris() {
           {(s.status === 'idle' || s.status === 'over' || s.status === 'paused') && (
             <div className="tetris-overlay">
               {s.status === 'over' && <>
-                <p className="t-over">GAME OVER</p>
+                <p className="t-over">{t.gameOver}</p>
                 <p className="t-score-final">{s.score} pts</p>
               </>}
-              {s.status === 'paused' && <p className="t-pause">PAUSA</p>}
+              {s.status === 'paused' && <p className="t-pause">{t.paused}</p>}
               <button className="btn-game" onClick={s.status === 'paused' ? togglePause : startGame}>
-                {s.status === 'idle' ? 'Jugar' : s.status === 'paused' ? 'Continuar' : 'Reintentar'}
+                {s.status === 'idle' ? t.start : s.status === 'paused' ? t.resume : t.restart}
               </button>
             </div>
           )}
@@ -257,7 +259,7 @@ export default function Tetris() {
         {/* Panel lateral */}
         <div className="tetris-side">
           <div className="t-panel">
-            <div className="t-lbl">SIGUIENTE</div>
+            <div className="t-lbl">{t.next.toUpperCase()}</div>
             <div className="t-next">
               {nextGrid.map((row, r) => (
                 <div key={r} className="t-next-row">
@@ -270,20 +272,20 @@ export default function Tetris() {
             </div>
           </div>
           <div className="t-panel">
-            <div className="t-lbl">PUNTOS</div>
+            <div className="t-lbl">{t.score.toUpperCase()}</div>
             <div className="t-val">{s.score}</div>
           </div>
           <div className="t-panel">
-            <div className="t-lbl">LÍNEAS</div>
+            <div className="t-lbl">{t.lines.toUpperCase()}</div>
             <div className="t-val">{s.lines}</div>
           </div>
           <div className="t-panel">
-            <div className="t-lbl">NIVEL</div>
+            <div className="t-lbl">{t.level.toUpperCase()}</div>
             <div className="t-val">{s.level}</div>
           </div>
           {s.status === 'playing' && (
             <button className="btn-game secondary" style={{ fontSize: '0.78rem', padding: '7px 4px' }} onClick={togglePause}>
-              Pausa (P)
+              {t.pause} (P)
             </button>
           )}
         </div>
@@ -302,7 +304,7 @@ export default function Tetris() {
         </div>
       </div>
 
-      <p className="game-hint">← → mover · ↑ rotar · ↓ bajar · Espacio caída · P pausa</p>
+      <p className="game-hint">{t.hint}</p>
     </div>
   );
 }

@@ -1,41 +1,33 @@
+import { serverT } from '../lib/i18n/server';
+
 export default function Home() {
+  const t = serverT('home');
+
   return (
     <>
       <div className="hero">
         <h1>
-          Bienvenido a <span className="highlight">WebPolimorfica</span>
+          {t.title} <span className="highlight">WebPolimorfica</span>
         </h1>
-        <p className="subtitle">
-          Una web viva. Cada nueva función que pidamos se despliega aquí
-          automáticamente desde GitHub.
-        </p>
-        <div className="badge">Desplegado con DeployFast · GitHub → Auto-deploy</div>
+        <p className="subtitle">{t.subtitle}</p>
+        <div className="badge">{t.badge}</div>
       </div>
 
       <div className="cards">
         <div className="card">
           <div className="card-icon">⚡</div>
-          <h3>Despliegue automático</h3>
-          <p>
-            Cada cambio que hacemos en el repositorio de GitHub se refleja aquí
-            al instante.
-          </p>
+          <h3>{t.card1Title}</h3>
+          <p>{t.card1Desc}</p>
         </div>
         <div className="card">
           <div className="card-icon">🧩</div>
-          <h3>Modular</h3>
-          <p>
-            Nuevas secciones o herramientas se añaden como rutas independientes
-            sin romper nada.
-          </p>
+          <h3>{t.card2Title}</h3>
+          <p>{t.card2Desc}</p>
         </div>
         <div className="card">
           <div className="card-icon">🔄</div>
-          <h3>Siempre actualizado</h3>
-          <p>
-            El repositorio es la fuente de verdad. Lo que está en GitHub es lo
-            que ves aquí.
-          </p>
+          <h3>{t.card3Title}</h3>
+          <p>{t.card3Desc}</p>
         </div>
       </div>
     </>

@@ -1,10 +1,12 @@
 'use client';
 import { useState } from 'react';
+import { useT } from '../../components/LocaleProvider';
 
 export default function SolicitudCard({ tipo }) {
-  const [desc, setDesc]       = useState('');
-  const [status, setStatus]   = useState('idle');
-  const [errMsg, setErrMsg]   = useState('');
+  const t = useT('solicitud');
+  const [desc, setDesc]     = useState('');
+  const [status, setStatus] = useState('idle');
+  const [errMsg, setErrMsg] = useState('');
 
   const esJuego = tipo === 'juego';
 
@@ -34,10 +36,9 @@ export default function SolicitudCard({ tipo }) {
   return (
     <div className="solicitud-card">
       <div className="solicitud-icon">{esJuego ? '🙋' : '💡'}</div>
-      <h3 className="solicitud-title">Pide el tuyo propio</h3>
+      <h3 className="solicitud-title">{t.title}</h3>
       <p className="solicitud-desc">
-        ¿Tienes en mente {esJuego ? 'un juego' : 'una herramienta'}?
-        Descríbelo y lo revisamos para añadirlo.
+        {esJuego ? t.descJuego : t.descHerramienta}
       </p>
 
       {status === 'idle' && (
@@ -46,34 +47,34 @@ export default function SolicitudCard({ tipo }) {
             className="solicitud-textarea"
             value={desc}
             onChange={e => setDesc(e.target.value)}
-            placeholder={esJuego
-              ? 'Ej: "Un juego de Snake donde la serpiente va acelerando con cada manzana"'
-              : 'Ej: "Un conversor de imágenes a WebP con control de calidad"'}
+            placeholder={esJuego ? t.placeholderJuego : t.placeholderHerramienta}
             rows={3}
             maxLength={500}
             required
           />
           <button type="submit" className="btn-primary solicitud-btn">
-            Enviar solicitud
+            {t.enviar}
           </button>
         </form>
       )}
 
       {status === 'loading' && (
-        <p className="solicitud-feedback">Enviando…</p>
+        <p className="solicitud-feedback">{t.enviando}</p>
       )}
 
       {status === 'done' && (
-        <p className="solicitud-feedback solicitud-ok">
-          ✓ Solicitud enviada. Lo revisamos pronto.
-        </p>
+        <p className="solicitud-feedback solicitud-ok">{t.ok}</p>
       )}
 
       {status === 'error' && (
         <div>
-          <p className="solicitud-feedback solicitud-err">{errMsg || 'Error al enviar.'}</p>
-          <button className="btn-secondary" style={{ marginTop: '8px' }} onClick={() => { setStatus('idle'); setDesc(''); }}>
-            Reintentar
+          <p className="solicitud-feedback solicitud-err">{errMsg || t.error}</p>
+          <button
+            className="btn-secondary"
+            style={{ marginTop: '8px' }}
+            onClick={() => { setStatus('idle'); setDesc(''); }}
+          >
+            {t.reintentar}
           </button>
         </div>
       )}

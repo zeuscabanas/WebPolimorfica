@@ -1,5 +1,6 @@
 'use client';
 import { useEffect } from 'react';
+import { useT } from '../../components/LocaleProvider';
 
 const CV = {
   name: 'César Cabanas',
@@ -107,6 +108,8 @@ const skillColor = lvl =>
   lvl >= 80 ? '#22c55e' : lvl >= 60 ? '#6c63ff' : lvl >= 40 ? '#f59e0b' : '#64748b';
 
 export default function Curriculum() {
+  const t = useT('curriculum');
+
   useEffect(() => {
     const io = new IntersectionObserver(
       entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('cv-visible'); io.unobserve(e.target); } }),
@@ -125,7 +128,7 @@ export default function Curriculum() {
         <div className="cv-hero-text">
           <h1 className="cv-name">{CV.name}</h1>
           <p className="cv-title-badge">{CV.title}</p>
-          <p className="cv-about">{CV.about}</p>
+          <p className="cv-about">{t.about}</p>
           <div className="cv-contact-row">
             <a href={`mailto:${CV.contact.email}`} className="cv-chip">✉ {CV.contact.email}</a>
             <a href={`tel:${CV.contact.phone.replace(/\s/g,'')}`} className="cv-chip">📞 {CV.contact.phone}</a>
@@ -139,7 +142,7 @@ export default function Curriculum() {
         {CV.stats.map((s, i) => (
           <div key={i} className="cv-stat">
             <span className="cv-stat-value">{s.value}</span>
-            <span className="cv-stat-label">{s.label}</span>
+            <span className="cv-stat-label">{t.stats[i]?.label ?? s.label}</span>
           </div>
         ))}
       </div>
@@ -149,7 +152,7 @@ export default function Curriculum() {
 
           {/* ── EXPERIENCIA ── */}
           <section className="cv-section cv-reveal">
-            <h2 className="cv-section-title"><span className="cv-dot" />Experiencia</h2>
+            <h2 className="cv-section-title"><span className="cv-dot" />{t.experience}</h2>
             <div className="cv-timeline">
               {CV.experience.map((exp, i) => (
                 <div key={i} className="cv-tl-item cv-reveal" style={{ '--delay': `${i * 0.1}s` }}>
@@ -158,7 +161,7 @@ export default function Curriculum() {
                     <div className="cv-tl-header">
                       <div>
                         <span className="cv-tl-company">{exp.company}</span>
-                        {exp.current && <span className="cv-badge-current">Actual</span>}
+                        {exp.current && <span className="cv-badge-current">{t.current}</span>}
                         <p className="cv-tl-role">{exp.role}</p>
                       </div>
                       <span className="cv-tl-period">{exp.period}</span>
@@ -172,7 +175,7 @@ export default function Curriculum() {
 
           {/* ── FORMACIÓN ── */}
           <section className="cv-section cv-reveal">
-            <h2 className="cv-section-title"><span className="cv-dot" />Formación</h2>
+            <h2 className="cv-section-title"><span className="cv-dot" />{t.education}</h2>
             <div className="cv-timeline">
               {CV.education.map((edu, i) => (
                 <div key={i} className="cv-tl-item cv-reveal" style={{ '--delay': `${i * 0.1}s` }}>
@@ -193,7 +196,7 @@ export default function Curriculum() {
 
           {/* ── PROYECTOS ── */}
           <section className="cv-section cv-reveal">
-            <h2 className="cv-section-title"><span className="cv-dot" />Proyectos</h2>
+            <h2 className="cv-section-title"><span className="cv-dot" />{t.projects}</h2>
             <div className="cv-projects">
               {CV.projects.map((p, i) => (
                 <div key={i} className="cv-project-card cv-reveal" style={{ '--delay': `${i * 0.1}s` }}>
@@ -202,7 +205,7 @@ export default function Curriculum() {
                     <div className="cv-project-header">
                       <span className="cv-project-name">{p.name}</span>
                       {p.link && (
-                        <a href={p.link} target="_blank" rel="noreferrer" className="cv-project-link">↗ Ver</a>
+                        <a href={p.link} target="_blank" rel="noreferrer" className="cv-project-link">{t.see}</a>
                       )}
                     </div>
                     <p className="cv-project-desc">{p.desc}</p>
@@ -220,7 +223,7 @@ export default function Curriculum() {
         {/* ── SIDEBAR SKILLS ── */}
         <div className="cv-col-side">
           <section className="cv-section cv-reveal">
-            <h2 className="cv-section-title"><span className="cv-dot" />Skills</h2>
+            <h2 className="cv-section-title"><span className="cv-dot" />{t.skills}</h2>
             <div className="cv-skills">
               {CV.skills.map((sk, i) => (
                 <div key={i} className="cv-skill cv-reveal" style={{ '--delay': `${i * 0.05}s` }}>

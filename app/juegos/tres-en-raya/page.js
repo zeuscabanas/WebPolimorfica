@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { useT } from '../../../components/LocaleProvider';
 
 const LINES = [
   [0,1,2],[3,4,5],[6,7,8], // filas
@@ -16,6 +17,7 @@ function checkWinner(cells) {
 }
 
 export default function TresEnRaya() {
+  const t = useT('tresEnRaya');
   const [cells, setCells] = useState(Array(9).fill(null));
   const [isX, setIsX] = useState(true);
   const [scores, setScores] = useState({ X: 0, O: 0 });
@@ -44,13 +46,13 @@ export default function TresEnRaya() {
   };
 
   let status;
-  if (result)  status = { text: `¡Gana ${result.winner}!`, cls: result.winner === 'X' ? 'x' : 'o' };
-  else if (isDraw) status = { text: '¡Empate!', cls: 'draw' };
-  else status = { text: `Turno de ${isX ? 'X' : 'O'}`, cls: isX ? 'x' : 'o' };
+  if (result)  status = { text: `${result.winner} ${t.gana}`, cls: result.winner === 'X' ? 'x' : 'o' };
+  else if (isDraw) status = { text: t.tablas, cls: 'draw' };
+  else status = { text: `${t.turno}: ${isX ? 'X' : 'O'}`, cls: isX ? 'x' : 'o' };
 
   return (
     <div className="game-container" style={{ maxWidth: 460 }}>
-      <h1 className="game-title">✖ Tres en Raya</h1>
+      <h1 className="game-title">{t.title}</h1>
 
       <div className="ttr-scores">
         <div className={`ttr-score x${!isX && !result && !isDraw ? ' active' : ''}`}>
@@ -81,9 +83,9 @@ export default function TresEnRaya() {
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
         {(result || isDraw) && (
-          <button className="btn-game" onClick={reset}>Otra partida</button>
+          <button className="btn-game" onClick={reset}>{t.otraPartida}</button>
         )}
-        <button className="btn-game secondary" onClick={resetAll}>Reiniciar todo</button>
+        <button className="btn-game secondary" onClick={resetAll}>{t.reiniciarTodo}</button>
       </div>
     </div>
   );

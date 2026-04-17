@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import { useT } from '../../../components/LocaleProvider';
 
 export default function BuscarEmailsPage() {
+  const t = useT('buscarEmails');
   const [url, setUrl]         = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult]   = useState(null); // { emails: [], url } | { error: string }
@@ -30,28 +32,28 @@ export default function BuscarEmailsPage() {
   return (
     <div className="tool-page">
       <div className="tool-header">
-        <h1>📧 <span className="highlight">Buscar emails</span></h1>
-        <p className="subtitle">Pega la URL de una página web y extrae todos los correos electrónicos que aparezcan en ella.</p>
+        <h1><span className="highlight">{t.title}</span></h1>
+        <p className="subtitle">{t.subtitle}</p>
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', maxWidth: '680px', flexWrap: 'wrap' }}>
         <input
           className="yt-input"
           type="text"
-          placeholder="https://empresa.com/contacto"
+          placeholder={t.placeholder}
           value={url}
           onChange={e => setUrl(e.target.value)}
           style={{ flex: 1, minWidth: '260px' }}
           disabled={loading}
         />
         <button type="submit" className="btn-primary" disabled={loading || !url.trim()}>
-          {loading ? 'Buscando…' : 'Buscar'}
+          {loading ? t.buscando : t.buscar}
         </button>
       </form>
 
       {loading && (
         <div style={{ marginTop: '32px', opacity: 0.6, fontSize: '15px' }}>
-          Descargando la página…
+          {t.buscando}
         </div>
       )}
 
@@ -67,13 +69,11 @@ export default function BuscarEmailsPage() {
         <div style={{ marginTop: '28px', maxWidth: '680px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
             <span style={{ fontSize: '15px', fontWeight: 600 }}>
-              {result.emails.length === 0
-                ? 'No se encontraron emails en esa página.'
-                : `${result.emails.length} email${result.emails.length > 1 ? 's' : ''} encontrado${result.emails.length > 1 ? 's' : ''}`}
+              {result.emails.length === 0 ? t.noEmails : t.found(result.emails.length)}
             </span>
             {result.emails.length > 0 && (
               <button onClick={handleCopy} style={ghostBtn}>
-                {copied ? '✓ Copiado' : 'Copiar todo'}
+                {copied ? t.copied : t.copyAll}
               </button>
             )}
           </div>
@@ -93,7 +93,7 @@ export default function BuscarEmailsPage() {
                     onClick={() => navigator.clipboard.writeText(email)}
                     style={{ ...ghostBtn, padding: '4px 10px', fontSize: '12px', flexShrink: 0 }}
                   >
-                    Copiar
+                    {t.copy}
                   </button>
                 </div>
               ))}
