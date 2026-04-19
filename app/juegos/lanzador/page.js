@@ -2,578 +2,350 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useT } from '../../../components/LocaleProvider';
 
-// ─── Level definitions ──────────────────────────────────────────────────────
-// Each level: { birds, pigs: [{x,y}], blocks: [{x,y,w,h,type}] }
-// type: 'wood'|'stone'|'ice' — affects color and HP
-// Coordinates are in "world units": canvas is 800×400, ground at y=340
-
-const LEVELS = [
-  // 1 — Single tower
-  {
-    birds: ['red','red'],
-    pigs: [{ x: 560, y: 310 }],
-    blocks: [
-      { x: 545, y: 340, w: 30, h: 30, type: 'wood' },
-      { x: 545, y: 310, w: 30, h: 30, type: 'wood' },
-    ],
-  },
-  // 2 — Two towers
-  {
-    birds: ['red','red','red'],
-    pigs: [{ x: 540, y: 310 }, { x: 640, y: 310 }],
-    blocks: [
-      { x: 525, y: 340, w: 30, h: 30, type: 'wood' },
-      { x: 525, y: 310, w: 30, h: 30, type: 'wood' },
-      { x: 625, y: 340, w: 30, h: 30, type: 'wood' },
-      { x: 625, y: 310, w: 30, h: 30, type: 'wood' },
-    ],
-  },
-  // 3 — Tall tower + stone base
-  {
-    birds: ['red','red','red'],
-    pigs: [{ x: 570, y: 280 }],
-    blocks: [
-      { x: 555, y: 340, w: 30, h: 30, type: 'stone' },
-      { x: 555, y: 310, w: 30, h: 30, type: 'wood' },
-      { x: 555, y: 280, w: 30, h: 30, type: 'wood' },
-      { x: 555, y: 250, w: 30, h: 30, type: 'ice' },
-    ],
-  },
-  // 4 — Fort: walls + roof
-  {
-    birds: ['red','red','red','red'],
-    pigs: [{ x: 590, y: 310 }],
-    blocks: [
-      { x: 555, y: 340, w: 20, h: 70, type: 'wood' },
-      { x: 625, y: 340, w: 20, h: 70, type: 'wood' },
-      { x: 555, y: 270, w: 90, h: 20, type: 'stone' },
-    ],
-  },
-  // 5 — Two forts
-  {
-    birds: ['red','red','red','red','red'],
-    pigs: [{ x: 540, y: 300 }, { x: 660, y: 300 }],
-    blocks: [
-      { x: 510, y: 340, w: 20, h: 60, type: 'wood' },
-      { x: 560, y: 340, w: 20, h: 60, type: 'wood' },
-      { x: 510, y: 280, w: 70, h: 20, type: 'stone' },
-      { x: 630, y: 340, w: 20, h: 60, type: 'wood' },
-      { x: 680, y: 340, w: 20, h: 60, type: 'wood' },
-      { x: 630, y: 280, w: 70, h: 20, type: 'stone' },
-    ],
-  },
-  // 6 — Pyramid
-  {
-    birds: ['red','red','red'],
-    pigs: [{ x: 590, y: 280 }],
-    blocks: [
-      { x: 540, y: 340, w: 30, h: 30, type: 'stone' },
-      { x: 575, y: 340, w: 30, h: 30, type: 'stone' },
-      { x: 610, y: 340, w: 30, h: 30, type: 'stone' },
-      { x: 557, y: 310, w: 30, h: 30, type: 'wood' },
-      { x: 593, y: 310, w: 30, h: 30, type: 'wood' },
-      { x: 575, y: 280, w: 30, h: 30, type: 'ice' },
-    ],
-  },
-  // 7 — Stacked chaos
-  {
-    birds: ['red','red','red','red'],
-    pigs: [{ x: 560, y: 310 }, { x: 620, y: 250 }],
-    blocks: [
-      { x: 545, y: 340, w: 30, h: 30, type: 'wood' },
-      { x: 545, y: 310, w: 30, h: 30, type: 'wood' },
-      { x: 545, y: 280, w: 30, h: 60, type: 'stone' },
-      { x: 600, y: 340, w: 30, h: 30, type: 'wood' },
-      { x: 600, y: 310, w: 30, h: 30, type: 'ice' },
-      { x: 600, y: 280, w: 30, h: 30, type: 'ice' },
-      { x: 600, y: 250, w: 30, h: 30, type: 'wood' },
-    ],
-  },
-  // 8 — Wide castle
-  {
-    birds: ['red','red','red','red','red'],
-    pigs: [{ x: 545, y: 295 }, { x: 625, y: 295 }, { x: 585, y: 240 }],
-    blocks: [
-      { x: 520, y: 340, w: 20, h: 80, type: 'stone' },
-      { x: 660, y: 340, w: 20, h: 80, type: 'stone' },
-      { x: 520, y: 260, w: 160, h: 20, type: 'stone' },
-      { x: 560, y: 340, w: 20, h: 50, type: 'wood' },
-      { x: 620, y: 340, w: 20, h: 50, type: 'wood' },
-      { x: 560, y: 240, w: 80, h: 20, type: 'wood' },
-    ],
-  },
-  // 9 — Multi-story
-  {
-    birds: ['red','red','red','red','red'],
-    pigs: [{ x: 560, y: 310 }, { x: 620, y: 310 }, { x: 590, y: 240 }],
-    blocks: [
-      { x: 545, y: 340, w: 30, h: 30, type: 'stone' },
-      { x: 545, y: 310, w: 30, h: 30, type: 'wood' },
-      { x: 605, y: 340, w: 30, h: 30, type: 'stone' },
-      { x: 605, y: 310, w: 30, h: 30, type: 'wood' },
-      { x: 545, y: 280, w: 90, h: 20, type: 'stone' },
-      { x: 575, y: 260, w: 30, h: 30, type: 'ice' },
-      { x: 575, y: 230, w: 30, h: 30, type: 'ice' },
-    ],
-  },
-  // 10 — Final boss
-  {
-    birds: ['red','red','red','red','red','red'],
-    pigs: [{ x: 530, y: 305 }, { x: 600, y: 305 }, { x: 670, y: 305 }, { x: 565, y: 245 }, { x: 635, y: 245 }],
-    blocks: [
-      { x: 510, y: 340, w: 20, h: 70, type: 'stone' },
-      { x: 545, y: 340, w: 20, h: 70, type: 'stone' },
-      { x: 510, y: 270, w: 55, h: 20, type: 'stone' },
-      { x: 580, y: 340, w: 20, h: 70, type: 'stone' },
-      { x: 615, y: 340, w: 20, h: 70, type: 'stone' },
-      { x: 580, y: 270, w: 55, h: 20, type: 'stone' },
-      { x: 650, y: 340, w: 20, h: 70, type: 'stone' },
-      { x: 685, y: 340, w: 20, h: 70, type: 'stone' },
-      { x: 650, y: 270, w: 55, h: 20, type: 'stone' },
-      { x: 545, y: 250, w: 110, h: 20, type: 'wood' },
-      { x: 550, y: 270, w: 20, h: 30, type: 'wood' },
-      { x: 630, y: 270, w: 20, h: 30, type: 'wood' },
-    ],
-  },
-];
-
-// ─── Physics constants ───────────────────────────────────────────────────────
-const GRAVITY     = 0.4;
-const SLING_X     = 140;
-const SLING_Y     = 285;
-const SLING_R     = 55;          // max pull radius
-const BIRD_R      = 14;
-const PIG_R       = 16;
-const BLOCK_HP    = { wood: 3, stone: 5, ice: 2 };
-const GROUND_Y    = 358;
-const CANVAS_W    = 800;
-const CANVAS_H    = 400;
-
-// ─── Colors ──────────────────────────────────────────────────────────────────
-const BLOCK_COLORS = {
-  wood:  { fill: '#c8892a', stroke: '#8b5c14', crack: '#7a4210' },
-  stone: { fill: '#8e9aaf', stroke: '#5a6475', crack: '#454f5e' },
-  ice:   { fill: '#aee8f8', stroke: '#5ab4d0', crack: '#3a8ca8' },
+const CW = 800, CH = 450, GY = 398;
+const GRAV = 0.45;
+const SX = 130, SY = 308, MAX_PULL = 58;
+const BR = 13, PR = 14;
+const HP_MAX = { wood: 2, stone: 5, ice: 1 };
+const COL = {
+  wood:  { fill: '#d4892a', stroke: '#8b5a14', dark: '#5a3a0a' },
+  stone: { fill: '#8a9ab0', stroke: '#4a6070', dark: '#2a4050' },
+  ice:   { fill: '#c8f0ff', stroke: '#48b8d8', dark: '#1888b0' },
 };
 
-// ─── Helper: rect overlap ────────────────────────────────────────────────────
-function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
-  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
-}
+const blk = (x, bot, w, h, t) => ({ x, y: bot - h / 2, w, h, type: t, hp: HP_MAX[t], alive: true, dyn: false, vx: 0, vy: 0 });
+const pig = (x, bot) => ({ x, y: bot - PR, alive: true, hp: 2, dyn: false, vx: 0, vy: 0 });
 
-function circleRectOverlap(cx, cy, cr, rx, ry, rw, rh) {
-  const nearX = Math.max(rx, Math.min(cx, rx + rw));
-  const nearY = Math.max(ry, Math.min(cy, ry + rh));
-  const dx = cx - nearX, dy = cy - nearY;
-  return dx * dx + dy * dy < cr * cr;
-}
+const LEVELS = [
+  { birds: 2,
+    blocks: [blk(550, GY, 50, 30, 'wood'), blk(550, GY - 30, 50, 30, 'wood')],
+    pigs: [pig(550, GY - 60)] },
+  { birds: 3,
+    blocks: [blk(480, GY, 45, 30, 'wood'), blk(480, GY - 30, 45, 30, 'wood'),
+             blk(630, GY, 45, 30, 'wood'), blk(630, GY - 30, 45, 30, 'wood')],
+    pigs: [pig(480, GY - 60), pig(630, GY - 60)] },
+  { birds: 3,
+    blocks: [blk(486, GY, 20, 65, 'wood'), blk(594, GY, 20, 65, 'wood'),
+             blk(540, GY - 65, 128, 18, 'stone')],
+    pigs: [pig(540, GY)] },
+  { birds: 3,
+    blocks: [blk(495, GY, 40, 30, 'stone'), blk(540, GY, 40, 30, 'stone'), blk(585, GY, 40, 30, 'stone'),
+             blk(517, GY - 30, 40, 30, 'wood'), blk(562, GY - 30, 40, 30, 'wood'),
+             blk(540, GY - 60, 40, 30, 'ice')],
+    pigs: [pig(540, GY - 90)] },
+  { birds: 4,
+    blocks: [blk(468, GY, 18, 62, 'stone'), blk(528, GY, 18, 62, 'stone'), blk(498, GY - 62, 78, 18, 'stone'),
+             blk(600, GY, 18, 62, 'stone'), blk(660, GY, 18, 62, 'stone'), blk(630, GY - 62, 78, 18, 'stone')],
+    pigs: [pig(498, GY), pig(630, GY)] },
+  { birds: 3,
+    blocks: [blk(555, GY, 36, 30, 'stone'), blk(555, GY - 30, 36, 28, 'ice'),
+             blk(555, GY - 58, 36, 28, 'ice'), blk(555, GY - 86, 36, 28, 'ice')],
+    pigs: [pig(555, GY - 114)] },
+  { birds: 4,
+    blocks: [blk(475, GY, 20, 85, 'stone'), blk(665, GY, 20, 85, 'stone'),
+             blk(570, GY - 85, 210, 20, 'stone'),
+             blk(520, GY, 30, 30, 'wood'), blk(570, GY, 30, 30, 'wood'), blk(620, GY, 30, 30, 'wood')],
+    pigs: [pig(520, GY - 30), pig(570, GY - 30), pig(620, GY - 30), pig(570, GY - 105)] },
+  { birds: 4,
+    blocks: [blk(490, GY, 42, 32, 'wood'), blk(540, GY, 42, 62, 'wood'),
+             blk(590, GY, 42, 92, 'stone'), blk(640, GY, 42, 122, 'stone')],
+    pigs: [pig(490, GY - 32), pig(540, GY - 62), pig(590, GY - 92), pig(640, GY - 122)] },
+  { birds: 5,
+    blocks: [blk(490, GY, 22, 85, 'stone'), blk(610, GY, 22, 85, 'stone'),
+             blk(550, GY - 85, 142, 20, 'stone'),
+             blk(520, GY, 30, 50, 'wood'), blk(580, GY, 30, 50, 'wood'),
+             blk(550, GY - 50, 60, 20, 'wood')],
+    pigs: [pig(520, GY - 50), pig(580, GY - 50), pig(550, GY - 70), pig(550, GY - 105)] },
+  { birds: 6,
+    blocks: [blk(460, GY, 22, 90, 'stone'), blk(570, GY, 22, 90, 'stone'), blk(680, GY, 22, 90, 'stone'),
+             blk(515, GY - 90, 132, 20, 'stone'), blk(625, GY - 90, 132, 20, 'stone'),
+             blk(515, GY, 22, 55, 'wood'), blk(625, GY, 22, 55, 'wood'),
+             blk(515, GY - 110, 45, 22, 'stone'), blk(625, GY - 110, 45, 22, 'stone')],
+    pigs: [pig(490, GY), pig(570, GY - 55), pig(650, GY), pig(515, GY - 132), pig(625, GY - 132)] },
+];
 
-function circleCircleOverlap(ax, ay, ar, bx, by, br) {
-  const dx = ax - bx, dy = ay - by;
-  return dx * dx + dy * dy < (ar + br) * (ar + br);
-}
+const circleAABB = (cx, cy, cr, rx, ry, rw, rh) => {
+  const nx = Math.max(rx, Math.min(cx, rx + rw));
+  const ny = Math.max(ry, Math.min(cy, ry + rh));
+  return (cx - nx) ** 2 + (cy - ny) ** 2 < cr * cr;
+};
+const cc = (ax, ay, ar, bx, by, br) => (ax - bx) ** 2 + (ay - by) ** 2 < (ar + br) ** 2;
 
-// ─── Main game component ─────────────────────────────────────────────────────
 export default function LanzadorPage() {
   const t = useT('lanzador');
-  const canvasRef = useRef(null);
-  const stateRef  = useRef(null);
-  const rafRef    = useRef(null);
-  const [ui, setUi] = useState({ level: 0, score: 0, birds: 0, phase: 'idle' });
+  const cvs = useRef(null);
+  const g = useRef(null);
+  const raf = useRef(null);
+  const [ui, setUi] = useState({ phase: 'aim', lvl: 1, score: 0, birds: 0 });
 
-  // Build initial state for a level
-  const buildLevel = useCallback((lvlIdx) => {
-    const lvl = LEVELS[lvlIdx];
+  const build = useCallback((idx) => {
+    const L = LEVELS[idx];
     return {
-      lvlIdx,
-      score: 0,
-      birds: lvl.birds.map((type, i) => ({ type, queued: i > 0 })),
-      activeBird: null,
-      drag: false,
-      dragX: SLING_X,
-      dragY: SLING_Y,
-      blocks: lvl.blocks.map(b => ({ ...b, hp: BLOCK_HP[b.type] || 3, alive: true })),
-      pigs: lvl.pigs.map(p => ({ ...p, hp: 3, alive: true })),
-      particles: [],
-      phase: 'aim',  // aim | flying | result
-      resultTimer: 0,
+      idx, score: 0,
+      birdsLeft: L.birds,
+      active: null,
+      drag: false, dragX: SX, dragY: SY,
+      blocks: L.blocks.map(b => ({ ...b })),
+      pigs: L.pigs.map(p => ({ ...p })),
+      parts: [],
+      phase: 'aim',
+      shake: 0,
+      settleT: 0,
     };
   }, []);
 
-  const syncUi = useCallback((s) => {
+  const sync = useCallback(() => {
+    const s = g.current;
     if (!s) return;
-    const remainingBirds = s.birds.filter(b => b.queued).length + (s.activeBird ? 1 : 0);
-    setUi({
-      level: s.lvlIdx + 1,
-      score: s.score,
-      birds: remainingBirds + (s.phase === 'aim' ? 1 : 0),
-      phase: s.phase,
-    });
+    setUi({ phase: s.phase, lvl: s.idx + 1, score: s.score, birds: s.birdsLeft });
   }, []);
 
-  // ─── Draw ────────────────────────────────────────────────────────────────
-  const draw = useCallback((ctx, s, pointer) => {
-    const W = CANVAS_W, H = CANVAS_H;
-    ctx.clearRect(0, 0, W, H);
-
-    // Sky gradient
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, '#1a2a4a');
-    sky.addColorStop(1, '#2d5a8e');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, W, H);
-
-    // Clouds
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    [[120,80,60,25],[300,60,80,20],[550,90,70,22],[700,70,50,18]].forEach(([x,y,rw,rh]) => {
-      ctx.beginPath(); ctx.ellipse(x, y, rw, rh, 0, 0, Math.PI*2); ctx.fill();
-    });
-
-    // Ground
-    const ground = ctx.createLinearGradient(0, GROUND_Y, 0, H);
-    ground.addColorStop(0, '#3a7d44');
-    ground.addColorStop(0.3, '#2d5e33');
-    ground.addColorStop(1, '#1a3a1e');
-    ctx.fillStyle = ground;
-    ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
-    ctx.strokeStyle = '#4a9e55';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(W, GROUND_Y); ctx.stroke();
-
-    // Slingshot
-    ctx.strokeStyle = '#7a4a10';
-    ctx.lineWidth = 7;
-    ctx.lineCap = 'round';
-    // Left fork
-    ctx.beginPath();
-    ctx.moveTo(SLING_X - 10, GROUND_Y);
-    ctx.lineTo(SLING_X - 18, SLING_Y + 10);
-    ctx.stroke();
-    // Right fork
-    ctx.beginPath();
-    ctx.moveTo(SLING_X + 10, GROUND_Y);
-    ctx.lineTo(SLING_X + 18, SLING_Y + 10);
-    ctx.stroke();
-
-    // Slingshot elastic bands
-    const birdX = s.phase === 'aim' ? s.dragX : (s.activeBird ? s.activeBird.x : SLING_X);
-    const birdY = s.phase === 'aim' ? s.dragY : (s.activeBird ? s.activeBird.y : SLING_Y);
-    if (s.phase === 'aim' || (s.phase === 'flying' && s.activeBird)) {
-      ctx.strokeStyle = '#a0623a';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(SLING_X - 18, SLING_Y + 10);
-      ctx.lineTo(birdX, birdY);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(SLING_X + 18, SLING_Y + 10);
-      ctx.lineTo(birdX, birdY);
-      ctx.stroke();
+  const spawn = (s, x, y, color, n) => {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = Math.random() * 4 + 1;
+      s.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1.5, r: Math.random() * 3 + 2, color, life: 35 + Math.random() * 20, max: 50 });
     }
+  };
 
-    // Trajectory dots (only in aim mode)
-    if (s.phase === 'aim' && s.drag) {
-      const vx = (SLING_X - s.dragX) * 0.18;
-      const vy = (SLING_Y - s.dragY) * 0.18;
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      for (let i = 1; i <= 18; i++) {
-        const t2 = i * 4;
-        const px = birdX + vx * t2;
-        const py = birdY + vy * t2 + 0.5 * GRAVITY * t2 * t2;
-        if (py > GROUND_Y) break;
-        const r = 3 - i * 0.12;
-        if (r <= 0) break;
-        ctx.beginPath();
-        ctx.arc(px, py, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
+  const nextBird = (s) => {
+    s.active = null;
+    if (s.pigs.every(p => !p.alive)) {
+      s.phase = 'win';
+    } else if (s.birdsLeft <= 0) {
+      s.phase = 'settling';
+      s.settleT = 120;
+    } else {
+      s.phase = 'aim';
+      s.dragX = SX; s.dragY = SY;
     }
+  };
 
-    // Queued birds on ground near sling
-    const queuedBirds = s.birds.filter(b => b.queued);
-    queuedBirds.forEach((b, i) => {
-      const qx = SLING_X - 50 - i * 32;
-      const qy = GROUND_Y - BIRD_R;
-      drawBird(ctx, b.type, qx, qy, BIRD_R * 0.75, false);
-    });
-
-    // Active bird in sling (aim phase) or flying
-    if (s.phase === 'aim') {
-      const readyBird = s.birds.find(b => !b.queued);
-      if (readyBird) drawBird(ctx, readyBird.type, s.dragX, s.dragY, BIRD_R, s.drag);
-    } else if (s.activeBird) {
-      drawBird(ctx, s.activeBird.type, s.activeBird.x, s.activeBird.y, BIRD_R, false);
-    }
-
-    // Blocks
-    s.blocks.forEach(b => {
-      if (!b.alive) return;
-      const c = BLOCK_COLORS[b.type];
-      ctx.fillStyle = c.fill;
-      ctx.strokeStyle = c.stroke;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(b.x - b.w / 2, b.y - b.h, b.w, b.h, 3);
-      ctx.fill(); ctx.stroke();
-      // Cracks if damaged
-      if (b.hp < BLOCK_HP[b.type]) {
-        ctx.strokeStyle = c.crack;
-        ctx.lineWidth = 1.5;
-        const cx2 = b.x, cy2 = b.y - b.h / 2;
-        ctx.beginPath();
-        ctx.moveTo(cx2 - 4, cy2 - 5); ctx.lineTo(cx2 + 2, cy2 + 3); ctx.lineTo(cx2 - 2, cy2 + 8);
-        ctx.stroke();
-      }
-    });
-
-    // Pigs
-    s.pigs.forEach(p => {
-      if (!p.alive) return;
-      drawPig(ctx, p.x, p.y, PIG_R);
-    });
-
-    // Particles
-    s.particles.forEach(p => {
-      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-  }, []);
-
-  // ─── Physics tick ─────────────────────────────────────────────────────────
   const tick = useCallback(() => {
-    const s = stateRef.current;
-    if (!s) return;
+    const s = g.current;
+    if (!s) { raf.current = requestAnimationFrame(tick); return; }
 
-    // Update particles
-    s.particles = s.particles.filter(p => p.life > 0);
-    s.particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 1;
-    });
+    s.parts = s.parts.filter(p => p.life > 0);
+    s.parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 1; });
 
-    if (s.phase === 'flying' && s.activeBird) {
-      const b = s.activeBird;
+    if (s.phase === 'flying' && s.active) {
+      const b = s.active;
       b.vx *= 0.999;
-      b.vy += GRAVITY;
+      b.vy += GRAV;
       b.x += b.vx;
       b.y += b.vy;
-      b.trail.push({ x: b.x, y: b.y });
-      if (b.trail.length > 12) b.trail.shift();
 
-      // Ground collision
-      if (b.y + BIRD_R >= GROUND_Y) {
-        b.y = GROUND_Y - BIRD_R;
-        spawnParticles(s, b.x, b.y, '#c8a020', 8);
-        landBird(s);
-        return;
-      }
-
-      // Wall out of bounds
-      if (b.x > CANVAS_W + 50 || b.x < -50) {
-        landBird(s);
-        return;
-      }
-
-      // Block collisions
-      s.blocks.forEach(block => {
-        if (!block.alive) return;
-        if (circleRectOverlap(b.x, b.y, BIRD_R, block.x - block.w / 2, block.y - block.h, block.w, block.h)) {
-          const speed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-          const dmg = Math.ceil(speed / 6);
-          block.hp -= dmg;
-          s.score += dmg * 10;
-          spawnParticles(s, b.x, b.y, BLOCK_COLORS[block.type].crack, 10);
-          if (block.hp <= 0) {
-            block.alive = false;
-            s.score += 50;
-            spawnParticles(s, b.x, b.y, BLOCK_COLORS[block.type].fill, 20);
-          }
-          // Bounce
-          b.vx *= -0.3;
-          b.vy *= -0.4;
-          if (Math.abs(b.vx) < 1 && Math.abs(b.vy) < 1) {
-            landBird(s);
-          }
-        }
-      });
-
-      // Pig collisions
-      s.pigs.forEach(pig => {
-        if (!pig.alive) return;
-        if (circleCircleOverlap(b.x, b.y, BIRD_R, pig.x, pig.y, PIG_R)) {
-          pig.hp -= 2;
-          s.score += 100;
-          spawnParticles(s, pig.x, pig.y, '#7dc843', 15);
-          if (pig.hp <= 0) {
-            pig.alive = false;
-            s.score += 200;
-            spawnParticles(s, pig.x, pig.y, '#4a9e2a', 25);
-          }
-          b.vx *= -0.25;
-          b.vy *= -0.35;
-        }
-      });
-    }
-
-    if (s.phase === 'result') {
-      s.resultTimer--;
-      if (s.resultTimer <= 0) {
-        syncUi(s);
-      }
-    }
-
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      draw(ctx, s, null);
-    }
-    syncUi(s);
-
-    rafRef.current = requestAnimationFrame(tick);
-  }, [draw, syncUi]);
-
-  function landBird(s) {
-    s.activeBird = null;
-    const allPigsDead = s.pigs.every(p => !p.alive);
-    const noMoreBirds = s.birds.every(b => !b.queued) && !s.birds.find(b => !b.queued && !s.activeBird);
-
-    if (allPigsDead) {
-      s.phase = 'win';
-    } else {
-      // Next bird
-      const nextIdx = s.birds.findIndex(b => b.queued);
-      if (nextIdx === -1) {
-        s.phase = 'lose';
+      if (b.y + BR >= GY) {
+        b.y = GY - BR;
+        spawn(s, b.x, b.y, '#c8a020', 8);
+        nextBird(s);
+      } else if (b.x > CW + 50 || b.x < -50) {
+        nextBird(s);
       } else {
-        s.birds[nextIdx].queued = false;
-        s.phase = 'aim';
-        s.dragX = SLING_X;
-        s.dragY = SLING_Y;
-        s.drag = false;
+        for (const bl of s.blocks) {
+          if (!bl.alive) continue;
+          if (circleAABB(b.x, b.y, BR, bl.x - bl.w / 2, bl.y - bl.h / 2, bl.w, bl.h)) {
+            const sp = Math.hypot(b.vx, b.vy);
+            const dmg = Math.max(1, Math.ceil(sp / 5));
+            bl.hp -= dmg;
+            s.score += dmg * 10;
+            spawn(s, b.x, b.y, COL[bl.type].dark, 8);
+            if (bl.hp <= 0) {
+              bl.alive = false;
+              s.score += 50;
+              s.shake = Math.max(s.shake, 6);
+              spawn(s, bl.x, bl.y, COL[bl.type].fill, 18);
+            } else {
+              bl.dyn = true;
+              bl.vx += b.vx * 0.35;
+              bl.vy += b.vy * 0.28;
+            }
+            b.vx *= -0.22;
+            b.vy *= -0.32;
+            if (Math.hypot(b.vx, b.vy) < 1.5) { nextBird(s); break; }
+          }
+        }
+        if (s.active) {
+          for (const p of s.pigs) {
+            if (!p.alive) continue;
+            if (cc(b.x, b.y, BR, p.x, p.y, PR)) {
+              const sp = Math.hypot(b.vx, b.vy);
+              p.hp -= Math.max(1, Math.ceil(sp / 4));
+              s.score += 100;
+              spawn(s, p.x, p.y, '#7dc843', 12);
+              if (p.hp <= 0) {
+                p.alive = false;
+                s.score += 300;
+                s.shake = Math.max(s.shake, 10);
+                spawn(s, p.x, p.y, '#60c030', 28);
+              }
+              b.vx *= -0.15;
+              b.vy *= -0.25;
+            }
+          }
+        }
       }
     }
-  }
 
-  function spawnParticles(s, x, y, color, count) {
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 4 + 1;
-      s.particles.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 2,
-        r: Math.random() * 4 + 2,
-        color,
-        life: 30 + Math.random() * 20,
-        maxLife: 50,
-      });
+    for (const bl of s.blocks) {
+      if (!bl.alive || !bl.dyn) continue;
+      bl.vx *= 0.97;
+      bl.vy += GRAV;
+      bl.x += bl.vx;
+      bl.y += bl.vy;
+
+      if (bl.y + bl.h / 2 >= GY) {
+        bl.y = GY - bl.h / 2;
+        bl.vy *= -0.15;
+        bl.vx *= 0.75;
+        if (Math.abs(bl.vy) < 0.6 && Math.abs(bl.vx) < 0.4) { bl.vx = 0; bl.vy = 0; bl.dyn = false; }
+      }
+
+      for (const o of s.blocks) {
+        if (!o.alive || o === bl) continue;
+        const ox = (bl.w + o.w) / 2 - Math.abs(bl.x - o.x);
+        const oy = (bl.h + o.h) / 2 - Math.abs(bl.y - o.y);
+        if (ox > 0 && oy > 0) {
+          const sp = Math.hypot(bl.vx, bl.vy);
+          if (ox < oy) {
+            const d = bl.x < o.x ? -1 : 1;
+            bl.x += d * ox * 0.5;
+            o.x -= d * ox * 0.5;
+            if (sp > 2) {
+              o.dyn = true;
+              o.vx += bl.vx * 0.45;
+              o.vy += bl.vy * 0.15;
+              bl.vx *= 0.5;
+            }
+          } else {
+            const d = bl.y < o.y ? -1 : 1;
+            bl.y += d * oy * 0.5;
+            o.y -= d * oy * 0.5;
+            if (sp > 2) {
+              o.dyn = true;
+              o.vx += bl.vx * 0.15;
+              o.vy += bl.vy * 0.45;
+              bl.vy *= 0.4;
+            }
+          }
+          if (sp > 3) {
+            o.hp -= 1;
+            if (o.hp <= 0) {
+              o.alive = false;
+              s.score += 30;
+              spawn(s, o.x, o.y, COL[o.type].fill, 12);
+            }
+          }
+        }
+      }
+
+      for (const p of s.pigs) {
+        if (!p.alive) continue;
+        const sp = Math.hypot(bl.vx, bl.vy);
+        if (sp > 1.5 && circleAABB(p.x, p.y, PR, bl.x - bl.w / 2, bl.y - bl.h / 2, bl.w, bl.h)) {
+          p.hp -= Math.max(1, Math.ceil(sp / 4));
+          spawn(s, p.x, p.y, '#7dc843', 8);
+          if (p.hp <= 0) {
+            p.alive = false;
+            s.score += 250;
+            s.shake = Math.max(s.shake, 8);
+            spawn(s, p.x, p.y, '#60c030', 22);
+          }
+        }
+      }
     }
-  }
 
-  // ─── Mount / start ────────────────────────────────────────────────────────
+    for (const p of s.pigs) {
+      if (!p.alive || !p.dyn) continue;
+      p.vx *= 0.95; p.vy += GRAV;
+      p.x += p.vx; p.y += p.vy;
+      if (p.y + PR >= GY) { p.y = GY - PR; p.vy *= -0.2; p.vx *= 0.7; if (Math.abs(p.vy) < 0.5) { p.vy = 0; p.dyn = false; } }
+    }
+
+    if (s.phase === 'settling') {
+      s.settleT--;
+      const moving = s.blocks.some(b => b.alive && b.dyn);
+      const allDead = s.pigs.every(p => !p.alive);
+      if (allDead) s.phase = 'win';
+      else if ((!moving && s.settleT < 90) || s.settleT <= 0) s.phase = 'lose';
+    }
+
+    if (s.shake > 0) s.shake *= 0.88;
+
+    const c = cvs.current;
+    if (c) draw(c.getContext('2d'), s);
+    sync();
+
+    raf.current = requestAnimationFrame(tick);
+  }, [sync]);
+
   useEffect(() => {
-    const s = buildLevel(0);
-    stateRef.current = s;
-    syncUi(s);
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [buildLevel, tick, syncUi]);
+    g.current = build(0);
+    sync();
+    raf.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf.current);
+  }, [build, sync, tick]);
 
-  // ─── Input handlers ───────────────────────────────────────────────────────
-  const getPos = (e, canvas) => {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = CANVAS_W / rect.width;
-    const scaleY = CANVAS_H / rect.height;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return [(clientX - rect.left) * scaleX, (clientY - rect.top) * scaleY];
+  const pos = (e, c) => {
+    const r = c.getBoundingClientRect();
+    const sx = CW / r.width, sy = CH / r.height;
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    return [(x - r.left) * sx, (y - r.top) * sy];
   };
 
-  const onPointerDown = useCallback((e) => {
-    const s = stateRef.current;
+  const down = useCallback((e) => {
+    const s = g.current;
     if (!s || s.phase !== 'aim') return;
-    const canvas = canvasRef.current;
-    const [px, py] = getPos(e, canvas);
-    const dx = px - SLING_X, dy = py - SLING_Y;
-    if (Math.sqrt(dx * dx + dy * dy) < 50) {
-      s.drag = true;
-    }
+    const [x, y] = pos(e, cvs.current);
+    if ((x - SX) ** 2 + (y - SY) ** 2 < 2500) s.drag = true;
   }, []);
 
-  const onPointerMove = useCallback((e) => {
-    const s = stateRef.current;
+  const move = useCallback((e) => {
+    const s = g.current;
     if (!s || !s.drag || s.phase !== 'aim') return;
-    e.preventDefault();
-    const canvas = canvasRef.current;
-    const [px, py] = getPos(e, canvas);
-    const dx = px - SLING_X, dy = py - SLING_Y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > SLING_R) {
-      const ratio = SLING_R / dist;
-      s.dragX = SLING_X + dx * ratio;
-      s.dragY = SLING_Y + dy * ratio;
-    } else {
-      s.dragX = px;
-      s.dragY = py;
-    }
+    if (e.preventDefault) e.preventDefault();
+    const [x, y] = pos(e, cvs.current);
+    const dx = x - SX, dy = y - SY;
+    const d = Math.hypot(dx, dy);
+    if (d > MAX_PULL) { s.dragX = SX + dx / d * MAX_PULL; s.dragY = SY + dy / d * MAX_PULL; }
+    else { s.dragX = x; s.dragY = y; }
   }, []);
 
-  const onPointerUp = useCallback((e) => {
-    const s = stateRef.current;
+  const up = useCallback(() => {
+    const s = g.current;
     if (!s || !s.drag || s.phase !== 'aim') return;
     s.drag = false;
-    const vx = (SLING_X - s.dragX) * 0.18;
-    const vy = (SLING_Y - s.dragY) * 0.18;
-    if (Math.abs(vx) < 0.5 && Math.abs(vy) < 0.5) {
-      s.dragX = SLING_X; s.dragY = SLING_Y;
-      return;
-    }
-    // Mark first non-queued bird as active
-    const readyBird = s.birds.find(b => !b.queued);
-    if (!readyBird) return;
-    readyBird.queued = true; // consumed
-    s.activeBird = { type: readyBird.type, x: s.dragX, y: s.dragY, vx, vy, trail: [] };
+    const vx = (SX - s.dragX) * 0.2;
+    const vy = (SY - s.dragY) * 0.2;
+    if (Math.abs(vx) < 0.8 && Math.abs(vy) < 0.8) { s.dragX = SX; s.dragY = SY; return; }
+    s.active = { x: s.dragX, y: s.dragY, vx, vy };
+    s.birdsLeft -= 1;
     s.phase = 'flying';
-    s.dragX = SLING_X; s.dragY = SLING_Y;
+    s.dragX = SX; s.dragY = SY;
   }, []);
 
-  const handleNextLevel = () => {
-    const s = stateRef.current;
-    if (!s) return;
-    const next = s.lvlIdx + 1;
-    if (next >= LEVELS.length) {
-      stateRef.current = { ...buildLevel(0), phase: 'allLevels' };
-      syncUi(stateRef.current);
-      return;
-    }
-    stateRef.current = buildLevel(next);
-    syncUi(stateRef.current);
-  };
-
-  const handleRestart = () => {
-    const s = stateRef.current;
-    if (!s) return;
-    stateRef.current = buildLevel(s.lvlIdx);
-    syncUi(stateRef.current);
-  };
-
-  // Touch events need passive:false to allow preventDefault
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const opts = { passive: false };
-    canvas.addEventListener('touchmove', onPointerMove, opts);
-    canvas.addEventListener('touchstart', onPointerDown, opts);
-    canvas.addEventListener('touchend', onPointerUp, opts);
+    const c = cvs.current;
+    if (!c) return;
+    const o = { passive: false };
+    c.addEventListener('touchstart', down, o);
+    c.addEventListener('touchmove', move, o);
+    c.addEventListener('touchend', up, o);
     return () => {
-      canvas.removeEventListener('touchmove', onPointerMove, opts);
-      canvas.removeEventListener('touchstart', onPointerDown, opts);
-      canvas.removeEventListener('touchend', onPointerUp, opts);
+      c.removeEventListener('touchstart', down, o);
+      c.removeEventListener('touchmove', move, o);
+      c.removeEventListener('touchend', up, o);
     };
-  }, [onPointerDown, onPointerMove, onPointerUp]);
+  }, [down, move, up]);
+
+  const next = () => {
+    const s = g.current;
+    const i = s.idx + 1;
+    if (i >= LEVELS.length) { g.current = { ...build(0), phase: 'allDone' }; sync(); return; }
+    g.current = build(i); sync();
+  };
+  const retry = () => { g.current = build(g.current.idx); sync(); };
 
   return (
     <div className="tool-page" style={{ maxWidth: '860px' }}>
@@ -582,178 +354,282 @@ export default function LanzadorPage() {
         <p className="subtitle">{t.subtitle}</p>
       </div>
 
-      {/* HUD */}
-      <div style={{
-        display: 'flex', gap: '24px', alignItems: 'center', marginBottom: '12px',
-        flexWrap: 'wrap', fontSize: '14px', fontWeight: 600,
-      }}>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '14px', fontWeight: 600 }}>
         <span style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '8px', padding: '6px 14px' }}>
-          {t.level} {ui.level} / {LEVELS.length}
+          {t.level} {ui.lvl}/{LEVELS.length}
         </span>
         <span style={{ background: 'rgba(255,200,50,0.1)', border: '1px solid rgba(255,200,50,0.3)', borderRadius: '8px', padding: '6px 14px' }}>
           {t.score}: {ui.score}
         </span>
         <span style={{ background: 'rgba(100,220,100,0.08)', border: '1px solid rgba(100,220,100,0.25)', borderRadius: '8px', padding: '6px 14px' }}>
-          🐦 {t.birds}: {ui.birds}
+          🐦 {ui.birds}{ui.phase === 'aim' ? '+1' : ''}
         </span>
       </div>
 
-      {/* Canvas */}
       <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
         <canvas
-          ref={canvasRef}
-          width={CANVAS_W}
-          height={CANVAS_H}
-          style={{ display: 'block', width: '100%', cursor: ui.phase === 'aim' ? 'crosshair' : 'default', touchAction: 'none' }}
-          onMouseDown={onPointerDown}
-          onMouseMove={onPointerMove}
-          onMouseUp={onPointerUp}
+          ref={cvs}
+          width={CW}
+          height={CH}
+          style={{ display: 'block', width: '100%', cursor: ui.phase === 'aim' ? 'grab' : 'default', touchAction: 'none' }}
+          onMouseDown={down}
+          onMouseMove={move}
+          onMouseUp={up}
+          onMouseLeave={up}
         />
-
-        {/* Win overlay */}
         {ui.phase === 'win' && (
-          <Overlay color="rgba(50,180,80,0.92)">
-            <div style={{ fontSize: '48px', marginBottom: '8px' }}>🎉</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px' }}>{t.levelComplete}</div>
-            <button className="btn-primary" onClick={handleNextLevel}>{t.nextLevel}</button>
-          </Overlay>
+          <Over color="rgba(50,170,80,0.94)">
+            <div style={{ fontSize: 48 }}>🎉</div>
+            <div style={{ fontSize: 22, fontWeight: 800, margin: '8px 0 16px' }}>{t.levelComplete}</div>
+            <button className="btn-primary" onClick={next}>{t.nextLevel}</button>
+          </Over>
         )}
-
-        {/* Lose overlay */}
         {ui.phase === 'lose' && (
-          <Overlay color="rgba(180,50,50,0.92)">
-            <div style={{ fontSize: '48px', marginBottom: '8px' }}>💥</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, marginBottom: '6px' }}>{t.gameOver}</div>
-            <div style={{ fontSize: '13px', opacity: 0.8, marginBottom: '16px' }}>{t.gameOverSub}</div>
-            <button className="btn-primary" onClick={handleRestart}>{t.restart}</button>
-          </Overlay>
+          <Over color="rgba(170,50,50,0.94)">
+            <div style={{ fontSize: 48 }}>💥</div>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>{t.gameOver}</div>
+            <div style={{ fontSize: 13, opacity: 0.8, margin: '4px 0 16px' }}>{t.gameOverSub}</div>
+            <button className="btn-primary" onClick={retry}>{t.restart}</button>
+          </Over>
         )}
-
-        {/* All levels overlay */}
-        {ui.phase === 'allLevels' && (
-          <Overlay color="rgba(100,60,200,0.94)">
-            <div style={{ fontSize: '56px', marginBottom: '8px' }}>🏆</div>
-            <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '16px', textAlign: 'center' }}>{t.allLevels}</div>
-            <button className="btn-primary" onClick={() => { stateRef.current = buildLevel(0); syncUi(stateRef.current); }}>▶ Nivel 1</button>
-          </Overlay>
+        {ui.phase === 'allDone' && (
+          <Over color="rgba(100,60,200,0.94)">
+            <div style={{ fontSize: 56 }}>🏆</div>
+            <div style={{ fontSize: 20, fontWeight: 800, margin: '8px 0 16px', textAlign: 'center' }}>{t.allLevels}</div>
+            <button className="btn-primary" onClick={() => { g.current = build(0); sync(); }}>▶ Nivel 1</button>
+          </Over>
         )}
       </div>
 
-      <p style={{ marginTop: '12px', fontSize: '13px', opacity: 0.45, textAlign: 'center' }}>{t.hint}</p>
+      <p style={{ marginTop: 12, fontSize: 13, opacity: 0.45, textAlign: 'center' }}>{t.hint}</p>
     </div>
   );
 }
 
-function Overlay({ color, children }) {
+function Over({ color, children }) {
   return (
-    <div style={{
-      position: 'absolute', inset: 0, background: color,
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      backdropFilter: 'blur(2px)',
-    }}>
+    <div style={{ position: 'absolute', inset: 0, background: color, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(2px)' }}>
       {children}
     </div>
   );
 }
 
-// ─── Draw helpers ─────────────────────────────────────────────────────────────
-function drawBird(ctx, type, x, y, r, dragging) {
+function draw(ctx, s) {
+  const W = CW, H = CH;
   ctx.save();
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  if (s.shake > 0.3) {
+    ctx.translate((Math.random() - 0.5) * s.shake, (Math.random() - 0.5) * s.shake);
+  }
+  ctx.clearRect(0, 0, W, H);
+
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#162341');
+  sky.addColorStop(0.6, '#2d5a8e');
+  sky.addColorStop(1, '#5a8ec0');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  [[100,60,70,22],[280,40,90,24],[490,80,60,18],[680,55,80,24]].forEach(([x,y,rw,rh]) => {
+    ctx.beginPath(); ctx.ellipse(x, y, rw, rh, 0, 0, Math.PI * 2); ctx.fill();
+  });
+
+  ctx.fillStyle = 'rgba(40,60,90,0.55)';
   ctx.beginPath();
-  ctx.ellipse(x, y + r * 0.9, r * 0.8, r * 0.3, 0, 0, Math.PI * 2);
+  ctx.moveTo(0, 340);
+  ctx.quadraticCurveTo(100, 290, 220, 320);
+  ctx.quadraticCurveTo(340, 345, 460, 310);
+  ctx.quadraticCurveTo(580, 280, 700, 325);
+  ctx.quadraticCurveTo(780, 345, 800, 330);
+  ctx.lineTo(800, GY);
+  ctx.lineTo(0, GY);
+  ctx.closePath();
   ctx.fill();
 
-  // Body
-  const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
-  grad.addColorStop(0, '#ff8888');
-  grad.addColorStop(1, '#cc2222');
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Angry brow
-  ctx.strokeStyle = '#330000';
+  const g1 = ctx.createLinearGradient(0, GY, 0, H);
+  g1.addColorStop(0, '#3a7d44');
+  g1.addColorStop(0.4, '#2d5e33');
+  g1.addColorStop(1, '#1a3a1e');
+  ctx.fillStyle = g1;
+  ctx.fillRect(0, GY, W, H - GY);
+  ctx.strokeStyle = '#5bc050';
   ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, GY); ctx.lineTo(W, GY); ctx.stroke();
+
+  ctx.strokeStyle = '#4a8c40';
+  ctx.lineWidth = 1.5;
+  for (let x = 10; x < W; x += 7) {
+    const h = 4 + (Math.sin(x * 0.3) + 1) * 2;
+    ctx.beginPath(); ctx.moveTo(x, GY); ctx.lineTo(x + 1, GY - h); ctx.stroke();
+  }
+
+  // Slingshot Y
+  ctx.strokeStyle = '#4a2a08';
+  ctx.lineWidth = 10;
   ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(x - r * 0.5, y - r * 0.2);
-  ctx.lineTo(x - r * 0.1, y - r * 0.45);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x + r * 0.5, y - r * 0.2);
-  ctx.lineTo(x + r * 0.1, y - r * 0.45);
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(SX, GY); ctx.lineTo(SX, SY + 18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(SX, SY + 18); ctx.lineTo(SX - 16, SY - 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(SX, SY + 18); ctx.lineTo(SX + 16, SY - 2); ctx.stroke();
 
-  // Eyes
+  // Bands and bird in sling
+  const phAim = s.phase === 'aim';
+  const bx = phAim ? s.dragX : SX;
+  const by = phAim ? s.dragY : SY;
+
+  if (phAim) {
+    ctx.strokeStyle = '#9a5a30';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(SX - 16, SY - 2); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(SX + 16, SY - 2); ctx.lineTo(bx, by); ctx.stroke();
+  }
+
+  if (phAim && s.drag) {
+    const vx = (SX - s.dragX) * 0.2;
+    const vy = (SY - s.dragY) * 0.2;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    for (let i = 1; i <= 22; i++) {
+      const t2 = i * 4;
+      const px = bx + vx * t2;
+      const py = by + vy * t2 + 0.5 * GRAV * t2 * t2;
+      if (py > GY || px > CW) break;
+      const r = 3 - i * 0.1;
+      if (r <= 0.5) break;
+      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Blocks
+  for (const b of s.blocks) {
+    if (!b.alive) continue;
+    drawBlock(ctx, b);
+  }
+
+  // Pigs
+  for (const p of s.pigs) {
+    if (!p.alive) continue;
+    drawPig(ctx, p.x, p.y, PR);
+  }
+
+  // Waiting birds on ground
+  const remain = s.birdsLeft;
+  for (let i = 0; i < remain; i++) {
+    drawBird(ctx, SX - 42 - i * 28, GY - BR * 0.75, BR * 0.7);
+  }
+
+  // Bird in sling or flying
+  if (phAim) drawBird(ctx, s.dragX, s.dragY, BR);
+  else if (s.active) drawBird(ctx, s.active.x, s.active.y, BR);
+
+  // Particles
+  for (const p of s.parts) {
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawBlock(ctx, b) {
+  const c = COL[b.type];
+  const x = b.x - b.w / 2, y = b.y - b.h / 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(x + 2, y + 2, b.w, b.h);
+  const g = ctx.createLinearGradient(x, y, x, y + b.h);
+  g.addColorStop(0, c.fill);
+  g.addColorStop(1, c.stroke);
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, b.w, b.h);
+  ctx.strokeStyle = c.dark;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x + 0.5, y + 0.5, b.w - 1, b.h - 1);
+  if (b.hp < HP_MAX[b.type]) {
+    ctx.strokeStyle = c.dark;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + b.w * 0.3, y + b.h * 0.2);
+    ctx.lineTo(x + b.w * 0.5, y + b.h * 0.5);
+    ctx.lineTo(x + b.w * 0.35, y + b.h * 0.75);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + b.w * 0.55, y + b.h * 0.35);
+    ctx.lineTo(x + b.w * 0.7, y + b.h * 0.6);
+    ctx.stroke();
+  }
+}
+
+function drawBird(ctx, x, y, r) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(x, y + r * 0.95, r * 0.85, r * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+  g.addColorStop(0, '#ff9090');
+  g.addColorStop(0.7, '#d62a2a');
+  g.addColorStop(1, '#8a1010');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#a81818';
+  ctx.beginPath();
+  ctx.moveTo(x - r * 0.2, y - r * 0.85);
+  ctx.quadraticCurveTo(x, y - r * 1.4, x + r * 0.2, y - r * 0.85);
+  ctx.fill();
   ctx.fillStyle = 'white';
-  ctx.beginPath(); ctx.arc(x - r * 0.25, y - r * 0.1, r * 0.2, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + r * 0.25, y - r * 0.1, r * 0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - r * 0.28, y - r * 0.12, r * 0.26, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + r * 0.28, y - r * 0.12, r * 0.26, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#111';
-  ctx.beginPath(); ctx.arc(x - r * 0.22, y - r * 0.08, r * 0.1, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + r * 0.28, y - r * 0.08, r * 0.1, 0, Math.PI * 2); ctx.fill();
-
-  // Beak
+  ctx.beginPath(); ctx.arc(x - r * 0.22, y - r * 0.08, r * 0.13, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + r * 0.34, y - r * 0.08, r * 0.13, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#220000';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - r * 0.55, y - r * 0.35); ctx.lineTo(x - r * 0.1, y - r * 0.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + r * 0.55, y - r * 0.35); ctx.lineTo(x + r * 0.1, y - r * 0.5); ctx.stroke();
   ctx.fillStyle = '#ffa020';
   ctx.beginPath();
-  ctx.moveTo(x - r * 0.15, y + r * 0.1);
-  ctx.lineTo(x + r * 0.15, y + r * 0.1);
-  ctx.lineTo(x, y + r * 0.35);
+  ctx.moveTo(x - r * 0.18, y + r * 0.15);
+  ctx.lineTo(x + r * 0.18, y + r * 0.15);
+  ctx.lineTo(x, y + r * 0.48);
   ctx.closePath(); ctx.fill();
-
-  // Top feathers
-  ctx.fillStyle = '#cc2222';
-  ctx.beginPath();
-  ctx.moveTo(x - r * 0.15, y - r * 0.9);
-  ctx.lineTo(x, y - r * 1.3);
-  ctx.lineTo(x + r * 0.15, y - r * 0.9);
-  ctx.fill();
-
-  if (dragging) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.stroke();
-  }
+  ctx.strokeStyle = '#aa6010';
+  ctx.lineWidth = 1;
+  ctx.stroke();
   ctx.restore();
 }
 
 function drawPig(ctx, x, y, r) {
   ctx.save();
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath();
-  ctx.ellipse(x, y + r * 0.9, r * 0.85, r * 0.28, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Body
-  const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
-  grad.addColorStop(0, '#90e050');
-  grad.addColorStop(1, '#3a8020');
-  ctx.fillStyle = grad;
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath(); ctx.ellipse(x, y + r * 0.95, r * 0.9, r * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+  g.addColorStop(0, '#a8e860');
+  g.addColorStop(0.7, '#50a820');
+  g.addColorStop(1, '#2a6010');
+  ctx.fillStyle = g;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-
-  // Snout
-  ctx.fillStyle = '#60c030';
-  ctx.beginPath(); ctx.ellipse(x, y + r * 0.3, r * 0.45, r * 0.32, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#1a5010';
-  ctx.beginPath(); ctx.ellipse(x - r * 0.15, y + r * 0.3, r * 0.1, r * 0.12, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(x + r * 0.15, y + r * 0.3, r * 0.1, r * 0.12, 0, 0, Math.PI * 2); ctx.fill();
-
-  // Eyes
+  ctx.fillStyle = '#3a7818';
+  ctx.beginPath();
+  ctx.moveTo(x - r * 0.85, y - r * 0.4);
+  ctx.lineTo(x - r * 0.55, y - r * 1.1);
+  ctx.lineTo(x - r * 0.35, y - r * 0.55);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x + r * 0.85, y - r * 0.4);
+  ctx.lineTo(x + r * 0.55, y - r * 1.1);
+  ctx.lineTo(x + r * 0.35, y - r * 0.55);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#70c038';
+  ctx.beginPath(); ctx.ellipse(x, y + r * 0.3, r * 0.55, r * 0.38, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#204010';
+  ctx.beginPath(); ctx.ellipse(x - r * 0.18, y + r * 0.3, r * 0.1, r * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x + r * 0.18, y + r * 0.3, r * 0.1, r * 0.14, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = 'white';
-  ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.2, r * 0.22, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + r * 0.3, y - r * 0.2, r * 0.22, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - r * 0.32, y - r * 0.18, r * 0.24, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + r * 0.32, y - r * 0.18, r * 0.24, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#111';
-  ctx.beginPath(); ctx.arc(x - r * 0.27, y - r * 0.18, r * 0.11, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + r * 0.33, y - r * 0.18, r * 0.11, 0, Math.PI * 2); ctx.fill();
-
-  // Ears
-  ctx.fillStyle = '#3a8020';
-  ctx.beginPath();
-  ctx.ellipse(x - r * 0.75, y - r * 0.7, r * 0.2, r * 0.28, -0.4, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x + r * 0.75, y - r * 0.7, r * 0.2, r * 0.28, 0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - r * 0.27, y - r * 0.15, r * 0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + r * 0.37, y - r * 0.15, r * 0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'white';
+  ctx.beginPath(); ctx.arc(x - r * 0.24, y - r * 0.2, r * 0.04, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + r * 0.4, y - r * 0.2, r * 0.04, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
