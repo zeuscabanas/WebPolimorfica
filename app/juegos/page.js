@@ -14,7 +14,6 @@ export default function JuegosPage() {
     { href: '/juegos/tres-en-raya',  icon: '✖',  ...t.tresEnRaya },
     { href: '/juegos/cuatro-en-raya',icon: '🔴', ...t.cuatroEnRaya },
     { href: '/juegos/tetris',        icon: '🧩', ...t.tetris },
-    { href: '/juegos/lanzador',      icon: '🐦', ...t.lanzador },
   ];
 
   return (
