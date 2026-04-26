@@ -206,11 +206,6 @@ export default function FuenteCercanaPage() {
 
   useEffect(() => () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } }, []);
 
-  const fmtDuration = (s) => {
-    const m = Math.round(s / 60);
-    return m < 60 ? t.minutes(m) : t.hours(Math.floor(m / 60), m % 60);
-  };
-
   const loading = phase === 'locating' || phase === 'searching';
   const selected = fountains[selectedIdx];
 
@@ -294,10 +289,9 @@ export default function FuenteCercanaPage() {
 
                 {routePhase === 'done' && routeInfo && (
                   <div style={{
-                    display: 'flex', gap: 22, paddingTop: 12,
+                    paddingTop: 12,
                     borderTop: '1px solid rgba(14,165,233,0.15)', fontSize: 14,
                   }}>
-                    <span>🚶 <b>{fmtDuration(routeInfo.duration)}</b></span>
                     <span>📏 <b>{t.distance(routeInfo.distance)}</b> {t.walkingRoute}</span>
                   </div>
                 )}
