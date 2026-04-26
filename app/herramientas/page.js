@@ -15,6 +15,7 @@ export default function HerramientasPage() {
     { href: '/herramientas/buscar-persona-email', icon: '🕵️', ...t.buscarPersonaEmail },
     { href: '/herramientas/leer-qr',             icon: '📷', ...t.leerQr },
     { href: '/herramientas/generar-qr',          icon: '⬛', ...t.generarQr },
+    { href: '/herramientas/fuente-cercana',      icon: '💧', ...t.fuenteCercana },
   ];
 
   return (
