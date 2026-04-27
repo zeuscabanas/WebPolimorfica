@@ -341,73 +341,76 @@ function TiltCard({ children, style = {} }) {
 }
 
 /* ── Animated counter ────────────────────────────────────────────── */
-function Counter({ to, suffix = '' }) {
-  const [val, setVal] = useState(0);
+function Counter({ to, suffix = '', delay = 600 }) {
   const ref = useRef(null);
   useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      obs.disconnect();
+    let cancelled = false;
+    const t = setTimeout(() => {
       import('animejs').then(mod => {
+        if (cancelled || !ref.current) return;
         const anime = mod.default ?? mod;
         const obj = { v: 0 };
-        anime({ targets: obj, v: to, duration: 2000, easing: 'easeOutExpo', update: () => setVal(Math.round(obj.v)) });
+        anime({
+          targets: obj, v: to, duration: 1800, easing: 'easeOutExpo',
+          update: () => { if (ref.current) ref.current.textContent = Math.round(obj.v) + suffix; },
+        });
       });
-    }, { threshold: 0.5 });
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, [to]);
-  return <span ref={ref}>{val}{suffix}</span>;
+    }, delay);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [to, suffix, delay]);
+  return <span ref={ref}>0{suffix}</span>;
 }
 
 /* ── Circular skill gauge ────────────────────────────────────────── */
-function CircleGauge({ name, level }) {
-  const SIZE = 110, STROKE = 6, R = (SIZE - STROKE * 2) / 2; // 49
+function CircleGauge({ name, level, delay = 0 }) {
+  const SIZE = 110, STROKE = 6, R = (SIZE - STROKE * 2) / 2;
   const CIRC = 2 * Math.PI * R;
-  const [progress, setProgress] = useState(0); // 0..1
-  const [displayLevel, setDisplayLevel] = useState(0);
-  const ref = useRef(null);
+  const containerRef = useRef(null);
+  const circleRef = useRef(null);
+  const labelRef = useRef(null);
   const color = level >= 80 ? '#22c55e' : level >= 60 ? '#6c63ff' : level >= 40 ? '#f59e0b' : '#64748b';
 
   useEffect(() => {
+    let cancelled = false;
     const obs = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       obs.disconnect();
       import('animejs').then(mod => {
+        if (cancelled) return;
         const anime = mod.default ?? mod;
         const obj = { v: 0 };
         anime({
           targets: obj, v: level,
-          duration: 1700, delay: 200, easing: 'easeOutExpo',
+          duration: 1700, delay, easing: 'easeOutExpo',
           update: () => {
-            setProgress(obj.v / 100);
-            setDisplayLevel(Math.round(obj.v));
+            if (circleRef.current) {
+              circleRef.current.setAttribute('stroke-dashoffset', String(CIRC * (1 - obj.v / 100)));
+            }
+            if (labelRef.current) {
+              labelRef.current.textContent = String(Math.round(obj.v));
+            }
           },
         });
       });
-    }, { threshold: 0.25 });
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, [level]);
-
-  const dashOffset = CIRC * (1 - progress);
+    }, { threshold: 0.2 });
+    if (containerRef.current) obs.observe(containerRef.current);
+    return () => { cancelled = true; obs.disconnect(); };
+  }, [level, CIRC, delay]);
 
   return (
-    <div ref={ref} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
       <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
         <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)', display: 'block' }}>
-          {/* track */}
           <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} />
-          {/* progress */}
           <circle
+            ref={circleRef}
             cx={SIZE/2} cy={SIZE/2} r={R}
             fill="none" stroke={color} strokeWidth={STROKE}
             strokeDasharray={CIRC}
-            strokeDashoffset={dashOffset}
+            strokeDashoffset={CIRC}
             strokeLinecap="round"
             style={{ filter: `drop-shadow(0 0 8px ${color})` }}
           />
-          {/* tick marks every 10% */}
           {Array.from({ length: 12 }).map((_, i) => {
             const a = (i / 12) * 360 - 90;
             const rad = (a * Math.PI) / 180;
@@ -422,10 +425,10 @@ function CircleGauge({ name, level }) {
           position: 'absolute', inset: 0,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 10px ${color}66` }}>
-            {displayLevel}
+          <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 10px ${color}66`, display: 'flex', alignItems: 'baseline', gap: 2 }}>
+            <span ref={labelRef}>0</span>
+            <span style={{ fontSize: 11, opacity: 0.7 }}>%</span>
           </div>
-          <div style={{ fontSize: 9, opacity: 0.4, marginTop: 2, letterSpacing: '0.15em' }}>%</div>
         </div>
       </div>
       <div style={{ fontSize: 11, opacity: 0.75, textAlign: 'center', maxWidth: 110, lineHeight: 1.3, fontWeight: 500 }}>{name}</div>
@@ -513,59 +516,60 @@ export default function CurriculumAnimado() {
       {/* ── HERO ───────────────────────────────────────────────────── */}
       <section style={{
         position: 'relative', minHeight: '100vh',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        overflow: 'hidden', padding: '40px 24px',
       }}>
-        {/* primary 3D reactor */}
+        {/* faint background watermark */}
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transform: `translate(${(mouse.x - 0.5) * -16}px, ${(mouse.y - 0.5) * -16}px)`,
-          transition: 'transform 0.15s ease',
-          opacity: 0.42,
-        }}>
-          <Reactor3D mouseX={mouse.x} mouseY={mouse.y} size={520} idPrefix="hero" />
-        </div>
-
-        {/* deeper parallax watermark */}
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none', opacity: 0.05,
-          transform: `translate(${(mouse.x - 0.5) * -45}px, ${(mouse.y - 0.5) * -45}px)`,
+          pointerEvents: 'none', opacity: 0.04, zIndex: 0,
+          transform: `translate(${(mouse.x - 0.5) * -40}px, ${(mouse.y - 0.5) * -40}px)`,
           transition: 'transform 0.3s ease',
         }}>
-          <Reactor3D mouseX={0.5} mouseY={0.5} size={780} idPrefix="bg" />
+          <Reactor3D mouseX={0.5} mouseY={0.5} size={820} idPrefix="bg" />
         </div>
 
-        {/* content */}
-        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', padding: '0 24px',
-          transform: `translate(${(mouse.x - 0.5) * 8}px, ${(mouse.y - 0.5) * 8}px)`,
-          transition: 'transform 0.2s ease',
+        {/* TITLE BLOCK */}
+        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center',
+          transform: `translate(${(mouse.x - 0.5) * 6}px, ${(mouse.y - 0.5) * 6}px)`,
+          transition: 'transform 0.2s ease', marginBottom: 28,
         }}>
-          <div style={{ fontSize: 10, letterSpacing: '0.4em', color: '#0ea5e9', marginBottom: 16, opacity: 0.7 }}>
+          <div style={{ fontSize: 10, letterSpacing: '0.4em', color: '#0ea5e9', marginBottom: 14, opacity: 0.7 }}>
             SISTEMA INICIADO · CARGANDO PERFIL
           </div>
 
-          <h1 style={{ fontSize: 'clamp(42px, 9vw, 82px)', fontWeight: 900, letterSpacing: '-2px', lineHeight: 1, marginBottom: 12 }}>
+          <h1 style={{ fontSize: 'clamp(38px, 8vw, 74px)', fontWeight: 900, letterSpacing: '-2px', lineHeight: 1, marginBottom: 10 }}>
             <GlitchText text="CÉSAR CABANAS" style={{ color: '#fff' }} />
           </h1>
 
-          <div style={{ fontSize: 'clamp(11px, 1.8vw, 15px)', letterSpacing: '0.3em', color: '#0ea5e9', marginBottom: 28, fontWeight: 600 }}>
+          <div style={{ fontSize: 'clamp(11px, 1.8vw, 14px)', letterSpacing: '0.3em', color: '#0ea5e9', fontWeight: 600 }}>
             <Typing text="SALESFORCE DEVELOPER & FULL STACK" delay={1200} />
           </div>
+        </div>
 
-          <p style={{ maxWidth: 520, margin: '0 auto 40px', fontSize: 14, lineHeight: 1.75, color: 'rgba(226,232,240,0.65)' }}>
+        {/* INLINE INTERACTIVE 3D REACTOR */}
+        <div style={{ position: 'relative', zIndex: 2, marginBottom: 32 }}>
+          <Reactor3D mouseX={mouse.x} mouseY={mouse.y} size={360} idPrefix="hero" />
+        </div>
+
+        {/* ABOUT + STATS */}
+        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: 720,
+          transform: `translate(${(mouse.x - 0.5) * 4}px, ${(mouse.y - 0.5) * 4}px)`,
+          transition: 'transform 0.25s ease',
+        }}>
+          <p style={{ maxWidth: 520, margin: '0 auto 28px', fontSize: 13, lineHeight: 1.75, color: 'rgba(226,232,240,0.65)' }}>
             {CV.about}
           </p>
 
-          <div style={{ display: 'flex', gap: 36, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 28, justifyContent: 'center', flexWrap: 'wrap' }}>
             {CV.stats.map((s, i) => (
               <TiltCard key={i}>
                 <div style={{
-                  padding: '14px 20px', background: 'rgba(14,165,233,0.06)',
-                  border: '1px solid rgba(14,165,233,0.2)', borderRadius: 10, textAlign: 'center',
+                  padding: '12px 20px', background: 'rgba(14,165,233,0.06)',
+                  border: '1px solid rgba(14,165,233,0.2)', borderRadius: 10, textAlign: 'center', minWidth: 100,
                 }}>
-                  <div style={{ fontSize: 30, fontWeight: 900, color: '#7dd3fc', lineHeight: 1 }}>
-                    <Counter to={s.val} suffix={s.suffix} />
+                  <div style={{ fontSize: 28, fontWeight: 900, color: '#7dd3fc', lineHeight: 1 }}>
+                    <Counter to={s.val} suffix={s.suffix} delay={400 + i * 150} />
                   </div>
                   <div style={{ fontSize: 10, opacity: 0.5, letterSpacing: '0.1em', marginTop: 4 }}>{s.label}</div>
                 </div>
@@ -573,8 +577,8 @@ export default function CurriculumAnimado() {
             ))}
           </div>
 
-          <div style={{ marginTop: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, opacity: 0.3 }}>
-            <div style={{ width: 1, height: 40, background: 'linear-gradient(180deg,transparent,#0ea5e9)' }} />
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: 0.3 }}>
+            <div style={{ width: 1, height: 28, background: 'linear-gradient(180deg,transparent,#0ea5e9)' }} />
             <div style={{ fontSize: 9, letterSpacing: '0.3em' }}>SCROLL</div>
           </div>
         </div>
