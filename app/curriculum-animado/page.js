@@ -105,172 +105,219 @@ function CursorTrail() {
   );
 }
 
-/* ── True 3D Reactor: layers at different Z depths ───────────────── */
-function ReactorLayer({ z, children, style = {} }) {
-  return (
-    <div style={{
-      position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transform: `translateZ(${z}px)`, transformStyle: 'preserve-3d', pointerEvents: 'none', ...style,
-    }}>
-      {children}
-    </div>
-  );
-}
+/* ── Arc Reactor helpers ─────────────────────────────────────────── */
+const DEG = Math.PI / 180;
+const pt = (cx, cy, r, deg) => [cx + r * Math.cos(deg * DEG), cy + r * Math.sin(deg * DEG)];
+const vanePts = (cx, cy, r1, r2, ang, w1, w2) =>
+  [pt(cx,cy,r1,ang-w1), pt(cx,cy,r1,ang+w1), pt(cx,cy,r2,ang+w2), pt(cx,cy,r2,ang-w2)]
+    .map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+const triPts = (cx, cy, rTip, rBase, ang) =>
+  [pt(cx,cy,rTip,ang), pt(cx,cy,rBase,ang+115), pt(cx,cy,rBase,ang-115)]
+    .map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
 
-function Reactor3D({ mouseX, mouseY, size = 460, idPrefix = 'r' }) {
-  const innerRef = useRef(null);
-  const animeRef = useRef(null);
+/* ── True 3D Arc Reactor ─────────────────────────────────────────── */
+function Reactor3D({ mouseX, mouseY, size = 360, idPrefix = 'r' }) {
+  const wrapRef = useRef(null);
+  const vanesRef = useRef(null);
+  const triRef = useRef(null);
+  const glowRef = useRef(null);
   const beamRef = useRef(null);
+  const rafRef = useRef(null);
+  const burstRef = useRef(null);
 
+  // RAF-driven rotations — no anime.js needed
   useEffect(() => {
-    import('animejs').then(mod => {
-      const anime = mod.default ?? mod;
-      animeRef.current = anime;
-      const p = idPrefix;
-      anime({ targets: `#${p}-r1`, rotate: [0, 360], duration: 14000, loop: true, easing: 'linear' });
-      anime({ targets: `#${p}-r2`, rotate: [0, -360], duration: 9000, loop: true, easing: 'linear' });
-      anime({ targets: `#${p}-r3`, rotate: [0, 360], duration: 6000, loop: true, easing: 'linear' });
-      anime({ targets: `#${p}-r4`, rotate: [0, -360], duration: 22000, loop: true, easing: 'linear' });
-      anime({ targets: `#${p}-rcore`, scale: [1, 1.18, 1], opacity: [0.8, 1, 0.8], duration: 2000, loop: true, easing: 'easeInOutSine' });
-      anime({ targets: `.${p}-rbolt`, opacity: [0, 1, 0], duration: 700, delay: anime.stagger(120), loop: true, easing: 'easeInOutQuad' });
-      anime({ targets: `#${p}-rglow`, r: ['120', '150', '120'], opacity: [0.08, 0.22, 0.08], duration: 2800, loop: true, easing: 'easeInOutSine' });
-    });
-  }, [idPrefix]);
+    let start = null;
+    let burstScale = 1, burstOpacity = 0.12;
+    burstRef.current = { scale: 1, op: 0.12, active: false, startT: 0 };
 
-  // 3D rotation based on mouse position
-  const rotX = (mouseY - 0.5) * 50;
-  const rotY = (mouseX - 0.5) * -50;
+    const tick = (ts) => {
+      if (!start) start = ts;
+      const t = ts - start;
 
-  // Calculate beam angle pointing toward the cursor
+      if (vanesRef.current)
+        vanesRef.current.setAttribute('transform', `rotate(${(t / 28000 * 360) % 360} 150 150)`);
+      if (triRef.current)
+        triRef.current.setAttribute('transform', `rotate(${-(t / 18000 * 360) % 360} 150 150)`);
+
+      // pulsing glow
+      const pulse = 0.1 + 0.08 * Math.sin(t / 1400);
+      if (glowRef.current) glowRef.current.setAttribute('opacity', pulse.toFixed(3));
+
+      // burst decay
+      const b = burstRef.current;
+      if (b.active) {
+        const bp = Math.min((ts - b.startT) / 600, 1);
+        burstScale = 1 + 1.8 * bp;
+        burstOpacity = 0.7 * (1 - bp);
+        if (burstOpacity <= 0) b.active = false;
+        if (glowRef.current) {
+          glowRef.current.style.transform = `scale(${burstScale})`;
+          glowRef.current.setAttribute('opacity', burstOpacity.toFixed(3));
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  // 3D tilt from mouse
+  const rotX = (mouseY - 0.5) * 48;
+  const rotY = (mouseX - 0.5) * -48;
+
+  // Beam toward cursor
   useEffect(() => {
     if (!beamRef.current) return;
     const angle = Math.atan2(mouseY - 0.5, mouseX - 0.5) * 180 / Math.PI;
     const dist = Math.hypot(mouseX - 0.5, mouseY - 0.5);
     beamRef.current.style.transform = `rotate(${angle}deg)`;
-    beamRef.current.style.opacity = Math.min(dist * 2.5, 0.85);
+    beamRef.current.style.opacity = Math.min(dist * 3, 0.9);
   }, [mouseX, mouseY]);
 
   const handleClick = () => {
-    const anime = animeRef.current;
-    if (!anime) return;
-    const p = idPrefix;
-    anime({ targets: `#${p}-rglow`, r: ['120', '210', '120'], opacity: [0.22, 0.6, 0.08], duration: 700, easing: 'easeOutExpo' });
-    anime({ targets: `#${p}-rcore`, scale: [1, 1.7, 1], duration: 500, easing: 'easeOutExpo' });
-    anime({ targets: `.${p}-rbolt`, opacity: [0, 1, 0], duration: 320, delay: anime.stagger(35), easing: 'easeOutExpo' });
-    anime({ targets: `#${p}-shock`, r: [40, 200], opacity: [0.7, 0], duration: 900, easing: 'easeOutExpo' });
+    if (burstRef.current) {
+      burstRef.current.active = true;
+      burstRef.current.startT = performance.now();
+    }
   };
 
+  const C = 150; // center
   const p = idPrefix;
-  const layerStyle = { width: size, height: size };
 
   return (
-    <div
-      style={{ position: 'relative', width: size, height: size, perspective: 1400, cursor: 'pointer' }}
-      onClick={handleClick}
-    >
-      <div
-        ref={innerRef}
-        style={{
-          width: '100%', height: '100%', position: 'relative',
-          transformStyle: 'preserve-3d',
-          transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
-          transition: 'transform 0.15s cubic-bezier(.2,.8,.3,1)',
-        }}
-      >
-        {/* shared filter defs */}
-        <svg width="0" height="0" style={{ position: 'absolute' }}>
-          <defs>
-            <radialGradient id={`${p}-cg`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#bae6fd" />
-              <stop offset="50%" stopColor="#0ea5e9" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#0369a1" stopOpacity="0.2" />
-            </radialGradient>
-            <filter id={`${p}-glow`}><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            <filter id={`${p}-glow2`}><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          </defs>
-        </svg>
-
-        {/* LAYER 1 — back glow (deepest) */}
-        <ReactorLayer z={-180} style={layerStyle}>
+    <div style={{ position: 'relative', width: size, height: size, perspective: 1200, cursor: 'pointer' }}
+      onClick={handleClick}>
+      <div ref={wrapRef} style={{
+        width: '100%', height: '100%', position: 'relative',
+        transformStyle: 'preserve-3d',
+        transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
+        transition: 'transform 0.12s cubic-bezier(.2,.8,.3,1)',
+      }}>
+        {/* ── LAYER: background glow ── */}
+        <div style={{ position: 'absolute', inset: 0, transform: 'translateZ(-160px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           <svg viewBox="0 0 300 300" width="100%" height="100%">
-            <circle id={`${p}-rglow`} cx="150" cy="150" r="120" fill="#0ea5e9" opacity="0.1" />
-            <circle id={`${p}-shock`} cx="150" cy="150" r="40" fill="none" stroke="#7dd3fc" strokeWidth="2" opacity="0" />
+            <defs>
+              <radialGradient id={`${p}-bg`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <circle ref={glowRef} cx={C} cy={C} r="130" fill={`url(#${p}-bg)`} opacity="0.12"
+              style={{ transformOrigin: '150px 150px' }} />
           </svg>
-        </ReactorLayer>
+        </div>
 
-        {/* LAYER 2 — outermost dotted ring */}
-        <ReactorLayer z={-110} style={layerStyle}>
+        {/* ── LAYER: outer housing ring ── */}
+        <div style={{ position: 'absolute', inset: 0, transform: 'translateZ(-80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           <svg viewBox="0 0 300 300" width="100%" height="100%">
-            <g id={`${p}-r4`} style={{ transformOrigin: '150px 150px' }}>
-              <circle cx="150" cy="150" r="135" fill="none" stroke="#0ea5e9" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="2 14" />
-              {[0,90,180,270].map(a => (
-                <circle key={a} cx="150" cy="15" r="2" fill="#7dd3fc" opacity="0.8" transform={`rotate(${a} 150 150)`} />
-              ))}
-            </g>
+            <defs>
+              <filter id={`${p}-f1`}><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            {/* dark housing fill */}
+            <circle cx={C} cy={C} r="128" fill="#020d1a" />
+            {/* thick outer rim */}
+            <circle cx={C} cy={C} r="128" fill="none" stroke="#0c3d5e" strokeWidth="10" />
+            {/* bright outer edge */}
+            <circle cx={C} cy={C} r="128" fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeOpacity="0.7" filter={`url(#${p}-f1)`} />
+            {/* 6 bolt nodes on outer ring */}
+            {[0,60,120,180,240,300].map(a => {
+              const [x,y] = pt(C,C,128,a);
+              return <circle key={a} cx={x.toFixed(1)} cy={y.toFixed(1)} r="4.5" fill="#0ea5e9" filter={`url(#${p}-f1)`} />;
+            })}
           </svg>
-        </ReactorLayer>
+        </div>
 
-        {/* LAYER 3 — outer ring with pegs */}
-        <ReactorLayer z={-50} style={layerStyle}>
-          <svg viewBox="0 0 300 300" width="100%" height="100%" style={{ filter: 'drop-shadow(0 0 12px rgba(14,165,233,0.45))' }}>
-            <g id={`${p}-r1`} style={{ transformOrigin: '150px 150px' }}>
-              <circle cx="150" cy="150" r="112" fill="none" stroke="#0ea5e9" strokeWidth="1" strokeOpacity="0.5" strokeDasharray="5 9" />
-              {[0,72,144,216,288].map(a => (
-                <rect key={a} x="147" y="32" width="6" height="6" rx="1.5" fill="#0ea5e9" opacity="0.9" filter={`url(#${p}-glow)`} transform={`rotate(${a} 150 150)`} />
-              ))}
-            </g>
-          </svg>
-        </ReactorLayer>
-
-        {/* LAYER 4 — middle ring */}
-        <ReactorLayer z={20} style={layerStyle}>
+        {/* ── LAYER: rotating vanes (turbine) ── */}
+        <div style={{ position: 'absolute', inset: 0, transform: 'translateZ(-20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           <svg viewBox="0 0 300 300" width="100%" height="100%">
-            <g id={`${p}-r2`} style={{ transformOrigin: '150px 150px' }}>
-              <circle cx="150" cy="150" r="90" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.55" strokeDasharray="10 7" />
-              {[36,108,180,252,324].map(a => (
-                <circle key={a} cx="150" cy="60" r="4.5" fill="#38bdf8" opacity="1" filter={`url(#${p}-glow)`} transform={`rotate(${a} 150 150)`} />
-              ))}
-            </g>
-            <polygon points="150,100 185,120 185,160 150,180 115,160 115,120" fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeOpacity="0.7" filter={`url(#${p}-glow)`} />
-          </svg>
-        </ReactorLayer>
-
-        {/* LAYER 5 — inner ring + bolts */}
-        <ReactorLayer z={70} style={layerStyle}>
-          <svg viewBox="0 0 300 300" width="100%" height="100%">
-            <g id={`${p}-r3`} style={{ transformOrigin: '150px 150px' }}>
-              <circle cx="150" cy="150" r="70" fill="none" stroke="#7dd3fc" strokeWidth="1" strokeOpacity="0.65" strokeDasharray="3 5" />
+            <defs>
+              <filter id={`${p}-f2`}><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <g ref={vanesRef} style={{ transformOrigin: '150px 150px' }}>
               {[0,45,90,135,180,225,270,315].map(a => (
-                <line key={a} x1="150" y1="80" x2="150" y2="90" stroke="#7dd3fc" strokeWidth="2" opacity="0.85" transform={`rotate(${a} 150 150)`} />
+                <polygon key={a}
+                  points={vanePts(C, C, 65, 112, a, 14, 9)}
+                  fill="rgba(14,165,233,0.18)"
+                  stroke="#38bdf8"
+                  strokeWidth="0.8"
+                  filter={`url(#${p}-f2)`}
+                />
               ))}
+              {/* vane separator lines */}
+              {[0,45,90,135,180,225,270,315].map(a => {
+                const [x1,y1] = pt(C,C,65,a);
+                const [x2,y2] = pt(C,C,112,a);
+                return <line key={a} x1={x1.toFixed(1)} y1={y1.toFixed(1)} x2={x2.toFixed(1)} y2={y2.toFixed(1)} stroke="#0ea5e9" strokeWidth="0.5" strokeOpacity="0.4" />;
+              })}
             </g>
-            {[0,40,80,120,160,200,240,280,320].map((a, i) => (
-              <line key={i} className={`${p}-rbolt`} x1="150" y1="104" x2="150" y2="122" stroke="#bae6fd" strokeWidth="1.5" opacity="0" transform={`rotate(${a} 150 150)`} filter={`url(#${p}-glow)`} />
-            ))}
+            {/* energy ring between vanes and core */}
+            <circle cx={C} cy={C} r="65" fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeOpacity="0.8" filter={`url(#${p}-f2)`} />
+            {[30,90,150,210,270,330].map(a => {
+              const [x,y] = pt(C,C,65,a);
+              return <circle key={a} cx={x.toFixed(1)} cy={y.toFixed(1)} r="3.5" fill="#7dd3fc" filter={`url(#${p}-f2)`} />;
+            })}
           </svg>
-        </ReactorLayer>
+        </div>
 
-        {/* LAYER 6 — core (closest) */}
-        <ReactorLayer z={130} style={layerStyle}>
-          <svg viewBox="0 0 300 300" width="100%" height="100%" style={{ filter: 'drop-shadow(0 0 25px rgba(14,165,233,0.7))' }}>
-            <polygon points="150,116 168,126 168,146 150,156 132,146 132,126" fill="rgba(14,165,233,0.08)" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
-            <circle id={`${p}-rcore`} cx="150" cy="150" r="40" fill={`url(#${p}-cg)`} filter={`url(#${p}-glow2)`} style={{ transformOrigin: '150px 150px' }} />
-            <circle cx="150" cy="150" r="28" fill="none" stroke="#fff" strokeWidth="1" strokeOpacity="0.3" />
-            <circle cx="150" cy="150" r="14" fill="#e0f2fe" opacity="1" filter={`url(#${p}-glow2)`} />
-            <line x1="150" y1="124" x2="150" y2="176" stroke="#fff" strokeWidth="1" strokeOpacity="0.25" />
-            <line x1="124" y1="150" x2="176" y2="150" stroke="#fff" strokeWidth="1" strokeOpacity="0.25" />
+        {/* ── LAYER: inner counter-rotating triangles ── */}
+        <div style={{ position: 'absolute', inset: 0, transform: 'translateZ(40px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <svg viewBox="0 0 300 300" width="100%" height="100%">
+            <defs>
+              <filter id={`${p}-f3`}><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <g ref={triRef} style={{ transformOrigin: '150px 150px' }}>
+              {[0,120,240].map(a => (
+                <polygon key={a}
+                  points={triPts(C, C, 48, 22, a)}
+                  fill="rgba(56,189,248,0.15)"
+                  stroke="#7dd3fc"
+                  strokeWidth="1.2"
+                  filter={`url(#${p}-f3)`}
+                />
+              ))}
+              <circle cx={C} cy={C} r="22" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+            </g>
           </svg>
-        </ReactorLayer>
+        </div>
 
-        {/* energy beam pointing at cursor */}
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%', width: size * 0.7, height: 2,
-          transformOrigin: '0 50%', pointerEvents: 'none', opacity: 0,
-        }} ref={beamRef}>
+        {/* ── LAYER: core (front) ── */}
+        <div style={{ position: 'absolute', inset: 0, transform: 'translateZ(110px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <svg viewBox="0 0 300 300" width="100%" height="100%">
+            <defs>
+              <radialGradient id={`${p}-cg`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="35%" stopColor="#bae6fd" />
+                <stop offset="70%" stopColor="#0ea5e9" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#0369a1" stopOpacity="0.3" />
+              </radialGradient>
+              <filter id={`${p}-f4`}><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id={`${p}-f5`}><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            {/* outer core glow bloom */}
+            <circle cx={C} cy={C} r="38" fill="#0ea5e9" opacity="0.3" filter={`url(#${p}-f5)`} />
+            {/* core fill */}
+            <circle cx={C} cy={C} r="32" fill={`url(#${p}-cg)`} filter={`url(#${p}-f4)`} />
+            {/* inner ring */}
+            <circle cx={C} cy={C} r="22" fill="none" stroke="#fff" strokeWidth="1" strokeOpacity="0.4" />
+            {/* hot white center */}
+            <circle cx={C} cy={C} r="12" fill="#ffffff" opacity="0.95" filter={`url(#${p}-f4)`} />
+          </svg>
+        </div>
+
+        {/* ── energy beam toward cursor ── */}
+        <div ref={beamRef} style={{
+          position: 'absolute', top: '50%', left: '50%',
+          width: size * 0.65, height: 3,
+          transformOrigin: '0 50%', opacity: 0, pointerEvents: 'none',
+          transform: 'translateZ(80px)',
+        }}>
           <div style={{
             width: '100%', height: '100%',
-            background: 'linear-gradient(90deg, rgba(125,211,252,0.9) 0%, rgba(14,165,233,0.5) 50%, transparent 100%)',
-            boxShadow: '0 0 8px rgba(14,165,233,0.8)',
+            background: 'linear-gradient(90deg, rgba(186,230,253,0.95) 0%, rgba(14,165,233,0.5) 40%, transparent 100%)',
+            boxShadow: '0 0 10px 2px rgba(14,165,233,0.6)',
+            borderRadius: 2,
           }} />
         </div>
       </div>
@@ -340,90 +387,81 @@ function TiltCard({ children, style = {} }) {
   );
 }
 
-/* ── Animated counter ────────────────────────────────────────────── */
-const Counter = memo(function Counter({ to, suffix = '', delay = 600 }) {
+/* ── Animated counter — pure RAF, no external deps ───────────────── */
+const Counter = memo(function Counter({ to, suffix = '', delay = 500 }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
-    let cancelled = false;
-    const t = setTimeout(() => {
-      import('animejs').then(mod => {
-        if (cancelled) return;
-        const anime = mod.default ?? mod;
-        const obj = { v: 0 };
-        anime({
-          targets: obj, v: to, duration: 1800, easing: 'easeOutExpo',
-          update: () => { if (!cancelled) setVal(Math.round(obj.v)); },
-        });
-      });
+    let raf, start = null;
+    const duration = 1800;
+    const timer = setTimeout(() => {
+      const tick = (ts) => {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        setVal(Math.round(eased * to));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
     }, delay);
-    return () => { cancelled = true; clearTimeout(t); };
+    return () => { clearTimeout(timer); cancelAnimationFrame(raf); };
   }, [to, delay]);
   return <span>{val}{suffix}</span>;
 });
 
-/* ── Circular skill gauge ────────────────────────────────────────── */
-const CircleGauge = memo(function CircleGauge({ name, level, delay = 0 }) {
+/* ── Circular skill gauge — pure RAF + IntersectionObserver ──────── */
+const CircleGauge = memo(function CircleGauge({ name, level }) {
   const SIZE = 110, STROKE = 6, R = (SIZE - STROKE * 2) / 2;
   const CIRC = 2 * Math.PI * R;
   const [offset, setOffset] = useState(CIRC);
   const [displayVal, setDisplayVal] = useState(0);
   const containerRef = useRef(null);
+  const firedRef = useRef(false);
   const color = level >= 80 ? '#22c55e' : level >= 60 ? '#6c63ff' : level >= 40 ? '#f59e0b' : '#64748b';
 
   useEffect(() => {
-    let cancelled = false;
+    let raf;
     const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
+      if (!e.isIntersecting || firedRef.current) return;
+      firedRef.current = true;
       obs.disconnect();
-      import('animejs').then(mod => {
-        if (cancelled) return;
-        const anime = mod.default ?? mod;
-        const obj = { v: 0 };
-        anime({
-          targets: obj, v: level,
-          duration: 1700, delay, easing: 'easeOutExpo',
-          update: () => {
-            if (!cancelled) {
-              setOffset(CIRC * (1 - obj.v / 100));
-              setDisplayVal(Math.round(obj.v));
-            }
-          },
-        });
-      });
+      let start = null;
+      const duration = 1600;
+      const tick = (ts) => {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const v = eased * level;
+        setOffset(CIRC * (1 - v / 100));
+        setDisplayVal(Math.round(v));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
     }, { threshold: 0.15 });
     if (containerRef.current) obs.observe(containerRef.current);
-    return () => { cancelled = true; obs.disconnect(); };
-  }, [level, CIRC, delay]);
+    return () => { obs.disconnect(); cancelAnimationFrame(raf); };
+  }, [level, CIRC]);
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
       <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
         <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)', display: 'block' }}>
           <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} />
-          <circle
-            cx={SIZE/2} cy={SIZE/2} r={R}
-            fill="none" stroke={color} strokeWidth={STROKE}
-            strokeDasharray={CIRC}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            style={{ filter: `drop-shadow(0 0 8px ${color})` }}
-          />
-          {Array.from({ length: 12 }).map((_, i) => {
-            const a = (i / 12) * 360 - 90;
-            const rad = (a * Math.PI) / 180;
+          <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke={color} strokeWidth={STROKE}
+            strokeDasharray={CIRC} strokeDashoffset={offset} strokeLinecap="round"
+            style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
+          {Array.from({ length: 10 }).map((_, i) => {
+            const a = (i / 10) * 360 - 90;
+            const rad = a * Math.PI / 180;
             const x1 = SIZE/2 + Math.cos(rad) * (R + STROKE);
             const y1 = SIZE/2 + Math.sin(rad) * (R + STROKE);
             const x2 = SIZE/2 + Math.cos(rad) * (R + STROKE + 4);
             const y2 = SIZE/2 + Math.sin(rad) * (R + STROKE + 4);
-            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />;
+            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.18)" strokeWidth="1.2" />;
           })}
         </svg>
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 10px ${color}66`, display: 'flex', alignItems: 'baseline', gap: 2 }}>
-            {displayVal}<span style={{ fontSize: 11, opacity: 0.7 }}>%</span>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 10px ${color}99` }}>
+            {displayVal}<span style={{ fontSize: 10, opacity: 0.7 }}>%</span>
           </div>
         </div>
       </div>
