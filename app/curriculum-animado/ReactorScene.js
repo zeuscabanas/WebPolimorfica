@@ -144,21 +144,21 @@ function Core() {
       {/* outer glow shell */}
       <mesh>
         <sphereGeometry args={[0.55, 32, 32]} />
-        <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={1.5} transparent opacity={0.15} />
+        <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.6} transparent opacity={0.08} />
       </mesh>
       {/* main core */}
       <mesh ref={coreRef}>
         <sphereGeometry args={[0.3, 32, 32]} />
-        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={6} metalness={0.3} roughness={0.1} />
+        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={2.2} metalness={0.3} roughness={0.1} />
       </mesh>
       {/* hot white center */}
       <mesh>
         <sphereGeometry args={[0.12, 16, 16]} />
-        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={20} />
+        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={6} />
       </mesh>
       {/* core light */}
-      <pointLight color="#f59e0b" intensity={25} distance={8} decay={2} />
-      <pointLight color="#ffffff" intensity={8} distance={2} decay={2} />
+      <pointLight color="#f59e0b" intensity={6} distance={6} decay={2} />
+      <pointLight color="#ffffff" intensity={2} distance={2} decay={2} />
     </group>
   );
 }
@@ -220,9 +220,9 @@ function Scene({ mouseX, mouseY }) {
 export default function ReactorScene({ mouseX = 0.5, mouseY = 0.5, size = 420, fill = false }) {
   const containerStyle = fill
     ? {
-        position: 'absolute', inset: 0,
-        WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, rgba(0,0,0,0.85) 55%, transparent 82%)',
-        maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, rgba(0,0,0,0.85) 55%, transparent 82%)',
+        position: 'absolute', inset: 0, opacity: 0.55,
+        WebkitMaskImage: 'radial-gradient(ellipse 65% 70% at 50% 55%, black 0%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.2) 60%, transparent 78%)',
+        maskImage: 'radial-gradient(ellipse 65% 70% at 50% 55%, black 0%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.2) 60%, transparent 78%)',
       }
     : {
         width: size, height: size, cursor: 'pointer',
@@ -241,10 +241,10 @@ export default function ReactorScene({ mouseX = 0.5, mouseY = 0.5, size = 420, f
         <Scene mouseX={mouseX} mouseY={mouseY} />
         <EffectComposer>
           <Bloom
-            luminanceThreshold={0.05}
+            luminanceThreshold={fill ? 0.35 : 0.05}
             luminanceSmoothing={0.9}
-            intensity={2.2}
-            radius={0.85}
+            intensity={fill ? 0.8 : 2.2}
+            radius={fill ? 0.55 : 0.85}
           />
         </EffectComposer>
       </Canvas>

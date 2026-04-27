@@ -553,8 +553,8 @@ export default function CurriculumAnimado() {
       {/* ── HERO ───────────────────────────────────────────────────── */}
       <section style={{
         position: 'relative', minHeight: '100vh',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden', padding: '40px 24px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
+        overflow: 'hidden', padding: '8vh 24px 6vh',
       }}>
         {/* FILL REACTOR BACKGROUND */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
@@ -564,7 +564,9 @@ export default function CurriculumAnimado() {
         {/* TITLE BLOCK */}
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center',
           transform: `translate(${(mouse.x - 0.5) * 6}px, ${(mouse.y - 0.5) * 6}px)`,
-          transition: 'transform 0.2s ease', marginBottom: 28,
+          transition: 'transform 0.2s ease',
+          marginBottom: 'auto',
+          textShadow: '0 2px 24px rgba(0,0,0,0.85), 0 0 40px rgba(0,0,0,0.6)',
         }}>
           <div style={{ fontSize: 10, letterSpacing: '0.4em', color: '#0ea5e9', marginBottom: 14, opacity: 0.7 }}>
             SISTEMA INICIADO · CARGANDO PERFIL
@@ -583,6 +585,7 @@ export default function CurriculumAnimado() {
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: 720,
           transform: `translate(${(mouse.x - 0.5) * 4}px, ${(mouse.y - 0.5) * 4}px)`,
           transition: 'transform 0.25s ease',
+          marginTop: 'auto',
         }}>
           <p style={{ maxWidth: 520, margin: '0 auto 28px', fontSize: 13, lineHeight: 1.75, color: 'rgba(226,232,240,0.65)' }}>
             {CV.about}
