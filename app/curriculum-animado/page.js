@@ -447,7 +447,7 @@ const CircleGauge = memo(function CircleGauge({ name, level }) {
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
       <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
-        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)', display: 'block' }}>
+        <svg width={SIZE} height={SIZE} overflow="visible" style={{ transform: 'rotate(-90deg)', display: 'block' }}>
           <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} />
           <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke={color} strokeWidth={STROKE}
             strokeDasharray={CIRC} strokeDashoffset={offset} strokeLinecap="round"
