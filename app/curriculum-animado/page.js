@@ -1,5 +1,12 @@
 'use client';
 import { useEffect, useRef, useState, useCallback, memo } from 'react';
+import dynamic from 'next/dynamic';
+
+const ReactorScene = dynamic(() => import('./ReactorScene'), { ssr: false, loading: () => (
+  <div style={{ width: 420, height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+    <div style={{ width: 120, height: 120, border: '1px solid #f59e0b', borderRadius: '50%', animation: 'spin 2s linear infinite' }} />
+  </div>
+) });
 
 const CV = {
   name: 'César Cabanas',
@@ -556,11 +563,11 @@ export default function CurriculumAnimado() {
         {/* faint background watermark */}
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none', opacity: 0.04, zIndex: 0,
+          pointerEvents: 'none', opacity: 0.07, zIndex: 0,
           transform: `translate(${(mouse.x - 0.5) * -40}px, ${(mouse.y - 0.5) * -40}px)`,
           transition: 'transform 0.3s ease',
         }}>
-          <Reactor3D mouseX={0.5} mouseY={0.5} size={820} idPrefix="bg" />
+          <ReactorScene mouseX={0.5} mouseY={0.5} size={780} />
         </div>
 
         {/* TITLE BLOCK */}
@@ -582,8 +589,8 @@ export default function CurriculumAnimado() {
         </div>
 
         {/* INLINE INTERACTIVE 3D REACTOR */}
-        <div style={{ position: 'relative', zIndex: 2, marginBottom: 32 }}>
-          <Reactor3D mouseX={mouse.x} mouseY={mouse.y} size={360} idPrefix="hero" />
+        <div style={{ position: 'relative', zIndex: 2, marginBottom: 16 }}>
+          <ReactorScene mouseX={mouse.x} mouseY={mouse.y} size={420} />
         </div>
 
         {/* ABOUT + STATS */}
@@ -680,8 +687,8 @@ export default function CurriculumAnimado() {
       </div>
 
       {/* fixed reactor watermark */}
-      <div style={{ position: 'fixed', bottom: -120, right: -120, opacity: 0.05, pointerEvents: 'none', zIndex: 0 }}>
-        <Reactor3D mouseX={0.5} mouseY={0.5} size={360} idPrefix="wm" />
+      <div style={{ position: 'fixed', bottom: -100, right: -100, opacity: 0.06, pointerEvents: 'none', zIndex: 0 }}>
+        <ReactorScene mouseX={0.5} mouseY={0.5} size={320} />
       </div>
     </div>
   );
