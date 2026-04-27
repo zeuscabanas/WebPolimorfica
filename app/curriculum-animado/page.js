@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, memo } from 'react';
 
 const CV = {
   name: 'César Cabanas',
@@ -341,33 +341,33 @@ function TiltCard({ children, style = {} }) {
 }
 
 /* ── Animated counter ────────────────────────────────────────────── */
-function Counter({ to, suffix = '', delay = 600 }) {
-  const ref = useRef(null);
+const Counter = memo(function Counter({ to, suffix = '', delay = 600 }) {
+  const [val, setVal] = useState(0);
   useEffect(() => {
     let cancelled = false;
     const t = setTimeout(() => {
       import('animejs').then(mod => {
-        if (cancelled || !ref.current) return;
+        if (cancelled) return;
         const anime = mod.default ?? mod;
         const obj = { v: 0 };
         anime({
           targets: obj, v: to, duration: 1800, easing: 'easeOutExpo',
-          update: () => { if (ref.current) ref.current.textContent = Math.round(obj.v) + suffix; },
+          update: () => { if (!cancelled) setVal(Math.round(obj.v)); },
         });
       });
     }, delay);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [to, suffix, delay]);
-  return <span ref={ref}>0{suffix}</span>;
-}
+  }, [to, delay]);
+  return <span>{val}{suffix}</span>;
+});
 
 /* ── Circular skill gauge ────────────────────────────────────────── */
-function CircleGauge({ name, level, delay = 0 }) {
+const CircleGauge = memo(function CircleGauge({ name, level, delay = 0 }) {
   const SIZE = 110, STROKE = 6, R = (SIZE - STROKE * 2) / 2;
   const CIRC = 2 * Math.PI * R;
+  const [offset, setOffset] = useState(CIRC);
+  const [displayVal, setDisplayVal] = useState(0);
   const containerRef = useRef(null);
-  const circleRef = useRef(null);
-  const labelRef = useRef(null);
   const color = level >= 80 ? '#22c55e' : level >= 60 ? '#6c63ff' : level >= 40 ? '#f59e0b' : '#64748b';
 
   useEffect(() => {
@@ -383,16 +383,14 @@ function CircleGauge({ name, level, delay = 0 }) {
           targets: obj, v: level,
           duration: 1700, delay, easing: 'easeOutExpo',
           update: () => {
-            if (circleRef.current) {
-              circleRef.current.setAttribute('stroke-dashoffset', String(CIRC * (1 - obj.v / 100)));
-            }
-            if (labelRef.current) {
-              labelRef.current.textContent = String(Math.round(obj.v));
+            if (!cancelled) {
+              setOffset(CIRC * (1 - obj.v / 100));
+              setDisplayVal(Math.round(obj.v));
             }
           },
         });
       });
-    }, { threshold: 0.2 });
+    }, { threshold: 0.15 });
     if (containerRef.current) obs.observe(containerRef.current);
     return () => { cancelled = true; obs.disconnect(); };
   }, [level, CIRC, delay]);
@@ -403,11 +401,10 @@ function CircleGauge({ name, level, delay = 0 }) {
         <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)', display: 'block' }}>
           <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} />
           <circle
-            ref={circleRef}
             cx={SIZE/2} cy={SIZE/2} r={R}
             fill="none" stroke={color} strokeWidth={STROKE}
             strokeDasharray={CIRC}
-            strokeDashoffset={CIRC}
+            strokeDashoffset={offset}
             strokeLinecap="round"
             style={{ filter: `drop-shadow(0 0 8px ${color})` }}
           />
@@ -426,15 +423,14 @@ function CircleGauge({ name, level, delay = 0 }) {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         }}>
           <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 10px ${color}66`, display: 'flex', alignItems: 'baseline', gap: 2 }}>
-            <span ref={labelRef}>0</span>
-            <span style={{ fontSize: 11, opacity: 0.7 }}>%</span>
+            {displayVal}<span style={{ fontSize: 11, opacity: 0.7 }}>%</span>
           </div>
         </div>
       </div>
       <div style={{ fontSize: 11, opacity: 0.75, textAlign: 'center', maxWidth: 110, lineHeight: 1.3, fontWeight: 500 }}>{name}</div>
     </div>
   );
-}
+});
 
 /* ── HUD bracket corner ──────────────────────────────────────────── */
 function HUDSection({ title, color = '#0ea5e9', children }) {
