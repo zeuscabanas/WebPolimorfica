@@ -105,105 +105,174 @@ function CursorTrail() {
   );
 }
 
-/* ── 3D Reactor that tracks mouse ────────────────────────────────── */
-function Reactor3D({ mouseX, mouseY }) {
-  const containerRef = useRef(null);
-  const svgRef = useRef(null);
+/* ── True 3D Reactor: layers at different Z depths ───────────────── */
+function ReactorLayer({ z, children, style = {} }) {
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transform: `translateZ(${z}px)`, transformStyle: 'preserve-3d', pointerEvents: 'none', ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function Reactor3D({ mouseX, mouseY, size = 460, idPrefix = 'r' }) {
+  const innerRef = useRef(null);
   const animeRef = useRef(null);
+  const beamRef = useRef(null);
 
   useEffect(() => {
     import('animejs').then(mod => {
       const anime = mod.default ?? mod;
       animeRef.current = anime;
-      anime({ targets: '#r1', rotate: [0, 360], duration: 14000, loop: true, easing: 'linear' });
-      anime({ targets: '#r2', rotate: [0, -360], duration: 9000, loop: true, easing: 'linear' });
-      anime({ targets: '#r3', rotate: [0, 360], duration: 6000, loop: true, easing: 'linear' });
-      anime({ targets: '#r4', rotate: [0, -360], duration: 22000, loop: true, easing: 'linear' });
-      anime({ targets: '#rcore', scale: [1, 1.15, 1], opacity: [0.8, 1, 0.8], duration: 2000, loop: true, easing: 'easeInOutSine' });
-      anime({ targets: '.rbolt', opacity: [0, 1, 0], duration: 700, delay: anime.stagger(120), loop: true, easing: 'easeInOutQuad' });
-      anime({ targets: '#rglow', r: ['120', '145', '120'], opacity: [0.06, 0.18, 0.06], duration: 2800, loop: true, easing: 'easeInOutSine' });
+      const p = idPrefix;
+      anime({ targets: `#${p}-r1`, rotate: [0, 360], duration: 14000, loop: true, easing: 'linear' });
+      anime({ targets: `#${p}-r2`, rotate: [0, -360], duration: 9000, loop: true, easing: 'linear' });
+      anime({ targets: `#${p}-r3`, rotate: [0, 360], duration: 6000, loop: true, easing: 'linear' });
+      anime({ targets: `#${p}-r4`, rotate: [0, -360], duration: 22000, loop: true, easing: 'linear' });
+      anime({ targets: `#${p}-rcore`, scale: [1, 1.18, 1], opacity: [0.8, 1, 0.8], duration: 2000, loop: true, easing: 'easeInOutSine' });
+      anime({ targets: `.${p}-rbolt`, opacity: [0, 1, 0], duration: 700, delay: anime.stagger(120), loop: true, easing: 'easeInOutQuad' });
+      anime({ targets: `#${p}-rglow`, r: ['120', '150', '120'], opacity: [0.08, 0.22, 0.08], duration: 2800, loop: true, easing: 'easeInOutSine' });
     });
-  }, []);
+  }, [idPrefix]);
 
+  // 3D rotation based on mouse position
+  const rotX = (mouseY - 0.5) * 50;
+  const rotY = (mouseX - 0.5) * -50;
+
+  // Calculate beam angle pointing toward the cursor
   useEffect(() => {
-    if (!containerRef.current) return;
-    const tiltX = (mouseY - 0.5) * 22;
-    const tiltY = (mouseX - 0.5) * -22;
-    containerRef.current.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+    if (!beamRef.current) return;
+    const angle = Math.atan2(mouseY - 0.5, mouseX - 0.5) * 180 / Math.PI;
+    const dist = Math.hypot(mouseX - 0.5, mouseY - 0.5);
+    beamRef.current.style.transform = `rotate(${angle}deg)`;
+    beamRef.current.style.opacity = Math.min(dist * 2.5, 0.85);
   }, [mouseX, mouseY]);
 
   const handleClick = () => {
-    if (!animeRef.current) return;
     const anime = animeRef.current;
-    anime({ targets: '#rglow', r: ['120', '200', '120'], opacity: [0.18, 0.5, 0.06], duration: 600, easing: 'easeOutExpo' });
-    anime({ targets: '#rcore', scale: [1, 1.6, 1], duration: 400, easing: 'easeOutExpo' });
-    anime({ targets: '.rbolt', opacity: [0, 1, 0], duration: 300, delay: anime.stagger(30), easing: 'easeOutExpo' });
+    if (!anime) return;
+    const p = idPrefix;
+    anime({ targets: `#${p}-rglow`, r: ['120', '210', '120'], opacity: [0.22, 0.6, 0.08], duration: 700, easing: 'easeOutExpo' });
+    anime({ targets: `#${p}-rcore`, scale: [1, 1.7, 1], duration: 500, easing: 'easeOutExpo' });
+    anime({ targets: `.${p}-rbolt`, opacity: [0, 1, 0], duration: 320, delay: anime.stagger(35), easing: 'easeOutExpo' });
+    anime({ targets: `#${p}-shock`, r: [40, 200], opacity: [0.7, 0], duration: 900, easing: 'easeOutExpo' });
   };
 
+  const p = idPrefix;
+  const layerStyle = { width: size, height: size };
+
   return (
-    <div style={{ perspective: '800px', cursor: 'pointer' }} onClick={handleClick}>
-      <div ref={containerRef} style={{ transition: 'transform 0.08s ease', transformStyle: 'preserve-3d' }}>
-        <svg ref={svgRef} viewBox="0 0 300 300" style={{ width: 420, height: 420, filter: 'drop-shadow(0 0 30px rgba(14,165,233,0.5))' }}>
+    <div
+      style={{ position: 'relative', width: size, height: size, perspective: 1400, cursor: 'pointer' }}
+      onClick={handleClick}
+    >
+      <div
+        ref={innerRef}
+        style={{
+          width: '100%', height: '100%', position: 'relative',
+          transformStyle: 'preserve-3d',
+          transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
+          transition: 'transform 0.15s cubic-bezier(.2,.8,.3,1)',
+        }}
+      >
+        {/* shared filter defs */}
+        <svg width="0" height="0" style={{ position: 'absolute' }}>
           <defs>
-            <radialGradient id="cg" cx="50%" cy="50%" r="50%">
+            <radialGradient id={`${p}-cg`} cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#bae6fd" />
               <stop offset="50%" stopColor="#0ea5e9" stopOpacity="0.9" />
               <stop offset="100%" stopColor="#0369a1" stopOpacity="0.2" />
             </radialGradient>
-            <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            <filter id="glow2"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id={`${p}-glow`}><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id={`${p}-glow2`}><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
           </defs>
-
-          <circle id="rglow" cx="150" cy="150" r="120" fill="#0ea5e9" opacity="0.08" />
-
-          {/* ring 4 outermost */}
-          <g id="r4" style={{ transformOrigin: '150px 150px' }}>
-            <circle cx="150" cy="150" r="128" fill="none" stroke="#0ea5e9" strokeWidth="0.5" strokeOpacity="0.2" strokeDasharray="2 14" />
-          </g>
-
-          {/* ring 1 */}
-          <g id="r1" style={{ transformOrigin: '150px 150px' }}>
-            <circle cx="150" cy="150" r="112" fill="none" stroke="#0ea5e9" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="5 9" />
-            {[0,72,144,216,288].map(a => (
-              <rect key={a} x="147" y="32" width="6" height="6" rx="1.5" fill="#0ea5e9" opacity="0.8" filter="url(#glow)" transform={`rotate(${a} 150 150)`} />
-            ))}
-          </g>
-
-          {/* ring 2 */}
-          <g id="r2" style={{ transformOrigin: '150px 150px' }}>
-            <circle cx="150" cy="150" r="90" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.45" strokeDasharray="10 7" />
-            {[36,108,180,252,324].map(a => (
-              <circle key={a} cx="150" cy="60" r="4.5" fill="#38bdf8" opacity="0.85" filter="url(#glow)" transform={`rotate(${a} 150 150)`} />
-            ))}
-          </g>
-
-          {/* ring 3 */}
-          <g id="r3" style={{ transformOrigin: '150px 150px' }}>
-            <circle cx="150" cy="150" r="70" fill="none" stroke="#7dd3fc" strokeWidth="1" strokeOpacity="0.55" strokeDasharray="3 5" />
-            {[0,45,90,135,180,225,270,315].map(a => (
-              <line key={a} x1="150" y1="80" x2="150" y2="90" stroke="#7dd3fc" strokeWidth="2" opacity="0.7" transform={`rotate(${a} 150 150)`} />
-            ))}
-          </g>
-
-          {/* energy bolts */}
-          {[0,40,80,120,160,200,240,280,320].map((a, i) => (
-            <line key={i} className="rbolt" x1="150" y1="104" x2="150" y2="122" stroke="#bae6fd" strokeWidth="1.5" opacity="0" transform={`rotate(${a} 150 150)`} filter="url(#glow)" />
-          ))}
-
-          {/* hexagon */}
-          <polygon points="150,100 185,120 185,160 150,180 115,160 115,120" fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeOpacity="0.65" filter="url(#glow)" />
-
-          {/* inner hex */}
-          <polygon points="150,116 168,126 168,146 150,156 132,146 132,126" fill="rgba(14,165,233,0.06)" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.4" />
-
-          {/* core */}
-          <circle id="rcore" cx="150" cy="150" r="40" fill="url(#cg)" filter="url(#glow2)" style={{ transformOrigin: '150px 150px' }} />
-          <circle cx="150" cy="150" r="28" fill="none" stroke="#fff" strokeWidth="1" strokeOpacity="0.25" />
-          <circle cx="150" cy="150" r="14" fill="#e0f2fe" opacity="0.95" filter="url(#glow2)" />
-
-          <line x1="150" y1="124" x2="150" y2="176" stroke="#fff" strokeWidth="1" strokeOpacity="0.2" />
-          <line x1="124" y1="150" x2="176" y2="150" stroke="#fff" strokeWidth="1" strokeOpacity="0.2" />
         </svg>
+
+        {/* LAYER 1 — back glow (deepest) */}
+        <ReactorLayer z={-180} style={layerStyle}>
+          <svg viewBox="0 0 300 300" width="100%" height="100%">
+            <circle id={`${p}-rglow`} cx="150" cy="150" r="120" fill="#0ea5e9" opacity="0.1" />
+            <circle id={`${p}-shock`} cx="150" cy="150" r="40" fill="none" stroke="#7dd3fc" strokeWidth="2" opacity="0" />
+          </svg>
+        </ReactorLayer>
+
+        {/* LAYER 2 — outermost dotted ring */}
+        <ReactorLayer z={-110} style={layerStyle}>
+          <svg viewBox="0 0 300 300" width="100%" height="100%">
+            <g id={`${p}-r4`} style={{ transformOrigin: '150px 150px' }}>
+              <circle cx="150" cy="150" r="135" fill="none" stroke="#0ea5e9" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="2 14" />
+              {[0,90,180,270].map(a => (
+                <circle key={a} cx="150" cy="15" r="2" fill="#7dd3fc" opacity="0.8" transform={`rotate(${a} 150 150)`} />
+              ))}
+            </g>
+          </svg>
+        </ReactorLayer>
+
+        {/* LAYER 3 — outer ring with pegs */}
+        <ReactorLayer z={-50} style={layerStyle}>
+          <svg viewBox="0 0 300 300" width="100%" height="100%" style={{ filter: 'drop-shadow(0 0 12px rgba(14,165,233,0.45))' }}>
+            <g id={`${p}-r1`} style={{ transformOrigin: '150px 150px' }}>
+              <circle cx="150" cy="150" r="112" fill="none" stroke="#0ea5e9" strokeWidth="1" strokeOpacity="0.5" strokeDasharray="5 9" />
+              {[0,72,144,216,288].map(a => (
+                <rect key={a} x="147" y="32" width="6" height="6" rx="1.5" fill="#0ea5e9" opacity="0.9" filter={`url(#${p}-glow)`} transform={`rotate(${a} 150 150)`} />
+              ))}
+            </g>
+          </svg>
+        </ReactorLayer>
+
+        {/* LAYER 4 — middle ring */}
+        <ReactorLayer z={20} style={layerStyle}>
+          <svg viewBox="0 0 300 300" width="100%" height="100%">
+            <g id={`${p}-r2`} style={{ transformOrigin: '150px 150px' }}>
+              <circle cx="150" cy="150" r="90" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.55" strokeDasharray="10 7" />
+              {[36,108,180,252,324].map(a => (
+                <circle key={a} cx="150" cy="60" r="4.5" fill="#38bdf8" opacity="1" filter={`url(#${p}-glow)`} transform={`rotate(${a} 150 150)`} />
+              ))}
+            </g>
+            <polygon points="150,100 185,120 185,160 150,180 115,160 115,120" fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeOpacity="0.7" filter={`url(#${p}-glow)`} />
+          </svg>
+        </ReactorLayer>
+
+        {/* LAYER 5 — inner ring + bolts */}
+        <ReactorLayer z={70} style={layerStyle}>
+          <svg viewBox="0 0 300 300" width="100%" height="100%">
+            <g id={`${p}-r3`} style={{ transformOrigin: '150px 150px' }}>
+              <circle cx="150" cy="150" r="70" fill="none" stroke="#7dd3fc" strokeWidth="1" strokeOpacity="0.65" strokeDasharray="3 5" />
+              {[0,45,90,135,180,225,270,315].map(a => (
+                <line key={a} x1="150" y1="80" x2="150" y2="90" stroke="#7dd3fc" strokeWidth="2" opacity="0.85" transform={`rotate(${a} 150 150)`} />
+              ))}
+            </g>
+            {[0,40,80,120,160,200,240,280,320].map((a, i) => (
+              <line key={i} className={`${p}-rbolt`} x1="150" y1="104" x2="150" y2="122" stroke="#bae6fd" strokeWidth="1.5" opacity="0" transform={`rotate(${a} 150 150)`} filter={`url(#${p}-glow)`} />
+            ))}
+          </svg>
+        </ReactorLayer>
+
+        {/* LAYER 6 — core (closest) */}
+        <ReactorLayer z={130} style={layerStyle}>
+          <svg viewBox="0 0 300 300" width="100%" height="100%" style={{ filter: 'drop-shadow(0 0 25px rgba(14,165,233,0.7))' }}>
+            <polygon points="150,116 168,126 168,146 150,156 132,146 132,126" fill="rgba(14,165,233,0.08)" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+            <circle id={`${p}-rcore`} cx="150" cy="150" r="40" fill={`url(#${p}-cg)`} filter={`url(#${p}-glow2)`} style={{ transformOrigin: '150px 150px' }} />
+            <circle cx="150" cy="150" r="28" fill="none" stroke="#fff" strokeWidth="1" strokeOpacity="0.3" />
+            <circle cx="150" cy="150" r="14" fill="#e0f2fe" opacity="1" filter={`url(#${p}-glow2)`} />
+            <line x1="150" y1="124" x2="150" y2="176" stroke="#fff" strokeWidth="1" strokeOpacity="0.25" />
+            <line x1="124" y1="150" x2="176" y2="150" stroke="#fff" strokeWidth="1" strokeOpacity="0.25" />
+          </svg>
+        </ReactorLayer>
+
+        {/* energy beam pointing at cursor */}
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%', width: size * 0.7, height: 2,
+          transformOrigin: '0 50%', pointerEvents: 'none', opacity: 0,
+        }} ref={beamRef}>
+          <div style={{
+            width: '100%', height: '100%',
+            background: 'linear-gradient(90deg, rgba(125,211,252,0.9) 0%, rgba(14,165,233,0.5) 50%, transparent 100%)',
+            boxShadow: '0 0 8px rgba(14,165,233,0.8)',
+          }} />
+        </div>
       </div>
     </div>
   );
@@ -293,8 +362,10 @@ function Counter({ to, suffix = '' }) {
 
 /* ── Circular skill gauge ────────────────────────────────────────── */
 function CircleGauge({ name, level }) {
-  const r = 28, circ = 2 * Math.PI * r;
-  const [dash, setDash] = useState(circ);
+  const SIZE = 110, STROKE = 6, R = (SIZE - STROKE * 2) / 2; // 49
+  const CIRC = 2 * Math.PI * R;
+  const [progress, setProgress] = useState(0); // 0..1
+  const [displayLevel, setDisplayLevel] = useState(0);
   const ref = useRef(null);
   const color = level >= 80 ? '#22c55e' : level >= 60 ? '#6c63ff' : level >= 40 ? '#f59e0b' : '#64748b';
 
@@ -305,29 +376,59 @@ function CircleGauge({ name, level }) {
       import('animejs').then(mod => {
         const anime = mod.default ?? mod;
         const obj = { v: 0 };
-        anime({ targets: obj, v: level, duration: 1600, delay: 300, easing: 'easeOutExpo', update: () => setDash(circ - (obj.v / 100) * circ) });
+        anime({
+          targets: obj, v: level,
+          duration: 1700, delay: 200, easing: 'easeOutExpo',
+          update: () => {
+            setProgress(obj.v / 100);
+            setDisplayLevel(Math.round(obj.v));
+          },
+        });
       });
-    }, { threshold: 0.3 });
+    }, { threshold: 0.25 });
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
-  }, [level, circ]);
+  }, [level]);
+
+  const dashOffset = CIRC * (1 - progress);
 
   return (
-    <div ref={ref} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-      <div style={{ position: 'relative', width: 72, height: 72 }}>
-        <svg width="72" height="72" style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4" />
-          <circle cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="4"
-            strokeDasharray={circ} strokeDashoffset={dash}
+    <div ref={ref} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
+        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)', display: 'block' }}>
+          {/* track */}
+          <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} />
+          {/* progress */}
+          <circle
+            cx={SIZE/2} cy={SIZE/2} r={R}
+            fill="none" stroke={color} strokeWidth={STROKE}
+            strokeDasharray={CIRC}
+            strokeDashoffset={dashOffset}
             strokeLinecap="round"
-            style={{ filter: `drop-shadow(0 0 6px ${color})`, transition: 'stroke-dashoffset 0.05s' }}
+            style={{ filter: `drop-shadow(0 0 8px ${color})` }}
           />
+          {/* tick marks every 10% */}
+          {Array.from({ length: 12 }).map((_, i) => {
+            const a = (i / 12) * 360 - 90;
+            const rad = (a * Math.PI) / 180;
+            const x1 = SIZE/2 + Math.cos(rad) * (R + STROKE);
+            const y1 = SIZE/2 + Math.sin(rad) * (R + STROKE);
+            const x2 = SIZE/2 + Math.cos(rad) * (R + STROKE + 4);
+            const y2 = SIZE/2 + Math.sin(rad) * (R + STROKE + 4);
+            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />;
+          })}
         </svg>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color }}>
-          {level}%
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 10px ${color}66` }}>
+            {displayLevel}
+          </div>
+          <div style={{ fontSize: 9, opacity: 0.4, marginTop: 2, letterSpacing: '0.15em' }}>%</div>
         </div>
       </div>
-      <div style={{ fontSize: 10, opacity: 0.6, textAlign: 'center', maxWidth: 70, lineHeight: 1.3 }}>{name}</div>
+      <div style={{ fontSize: 11, opacity: 0.75, textAlign: 'center', maxWidth: 110, lineHeight: 1.3, fontWeight: 500 }}>{name}</div>
     </div>
   );
 }
@@ -415,28 +516,24 @@ export default function CurriculumAnimado() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden',
       }}>
-        {/* parallax reactor bg */}
+        {/* primary 3D reactor */}
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none',
-          transform: `translate(${(mouse.x - 0.5) * -20}px, ${(mouse.y - 0.5) * -20}px)`,
+          transform: `translate(${(mouse.x - 0.5) * -16}px, ${(mouse.y - 0.5) * -16}px)`,
           transition: 'transform 0.15s ease',
+          opacity: 0.42,
         }}>
-          <div style={{ opacity: 0.22 }}>
-            <Reactor3D mouseX={mouse.x} mouseY={mouse.y} />
-          </div>
+          <Reactor3D mouseX={mouse.x} mouseY={mouse.y} size={520} idPrefix="hero" />
         </div>
 
-        {/* second parallax layer slower */}
+        {/* deeper parallax watermark */}
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none', opacity: 0.06,
-          transform: `translate(${(mouse.x - 0.5) * -40}px, ${(mouse.y - 0.5) * -40}px)`,
-          transition: 'transform 0.25s ease',
+          pointerEvents: 'none', opacity: 0.05,
+          transform: `translate(${(mouse.x - 0.5) * -45}px, ${(mouse.y - 0.5) * -45}px)`,
+          transition: 'transform 0.3s ease',
         }}>
-          <div style={{ width: 700, height: 700 }}>
-            <Reactor3D mouseX={0.5} mouseY={0.5} />
-          </div>
+          <Reactor3D mouseX={0.5} mouseY={0.5} size={780} idPrefix="bg" />
         </div>
 
         {/* content */}
@@ -545,8 +642,8 @@ export default function CurriculumAnimado() {
       </div>
 
       {/* fixed reactor watermark */}
-      <div style={{ position: 'fixed', bottom: -80, right: -80, width: 300, height: 300, opacity: 0.04, pointerEvents: 'none', zIndex: 0 }}>
-        <Reactor3D mouseX={0.5} mouseY={0.5} />
+      <div style={{ position: 'fixed', bottom: -120, right: -120, opacity: 0.05, pointerEvents: 'none', zIndex: 0 }}>
+        <Reactor3D mouseX={0.5} mouseY={0.5} size={360} idPrefix="wm" />
       </div>
     </div>
   );
