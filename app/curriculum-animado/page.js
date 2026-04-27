@@ -2,11 +2,7 @@
 import { useEffect, useRef, useState, useCallback, memo } from 'react';
 import dynamic from 'next/dynamic';
 
-const ReactorScene = dynamic(() => import('./ReactorScene'), { ssr: false, loading: () => (
-  <div style={{ width: 420, height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
-    <div style={{ width: 120, height: 120, border: '1px solid #f59e0b', borderRadius: '50%', animation: 'spin 2s linear infinite' }} />
-  </div>
-) });
+const ReactorScene = dynamic(() => import('./ReactorScene'), { ssr: false, loading: () => null });
 
 const CV = {
   name: 'César Cabanas',
@@ -560,14 +556,9 @@ export default function CurriculumAnimado() {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden', padding: '40px 24px',
       }}>
-        {/* faint background watermark */}
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none', opacity: 0.07, zIndex: 0,
-          transform: `translate(${(mouse.x - 0.5) * -40}px, ${(mouse.y - 0.5) * -40}px)`,
-          transition: 'transform 0.3s ease',
-        }}>
-          <ReactorScene mouseX={0.5} mouseY={0.5} size={780} />
+        {/* FILL REACTOR BACKGROUND */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+          <ReactorScene fill mouseX={mouse.x} mouseY={mouse.y} />
         </div>
 
         {/* TITLE BLOCK */}
@@ -586,11 +577,6 @@ export default function CurriculumAnimado() {
           <div style={{ fontSize: 'clamp(11px, 1.8vw, 14px)', letterSpacing: '0.3em', color: '#0ea5e9', fontWeight: 600 }}>
             <Typing text="SALESFORCE DEVELOPER & FULL STACK" delay={1200} />
           </div>
-        </div>
-
-        {/* INLINE INTERACTIVE 3D REACTOR */}
-        <div style={{ position: 'relative', zIndex: 2, marginBottom: 16 }}>
-          <ReactorScene mouseX={mouse.x} mouseY={mouse.y} size={420} />
         </div>
 
         {/* ABOUT + STATS */}

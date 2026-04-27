@@ -217,15 +217,23 @@ function Scene({ mouseX, mouseY }) {
 }
 
 /* ── Exported canvas component ───────────────────────────────────── */
-export default function ReactorScene({ mouseX = 0.5, mouseY = 0.5, size = 420 }) {
+export default function ReactorScene({ mouseX = 0.5, mouseY = 0.5, size = 420, fill = false }) {
+  const containerStyle = fill
+    ? {
+        position: 'absolute', inset: 0,
+        WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, rgba(0,0,0,0.85) 55%, transparent 82%)',
+        maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, rgba(0,0,0,0.85) 55%, transparent 82%)',
+      }
+    : {
+        width: size, height: size, cursor: 'pointer',
+        WebkitMaskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 45%, transparent 78%)',
+        maskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 45%, transparent 78%)',
+      };
+
   return (
-    <div style={{
-      width: size, height: size, cursor: 'pointer',
-      WebkitMaskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 45%, transparent 78%)',
-      maskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 45%, transparent 78%)',
-    }}>
+    <div style={containerStyle}>
       <Canvas
-        camera={{ position: [0, 0, 6.5], fov: 42 }}
+        camera={{ position: [0, 0, fill ? 8.5 : 6.5], fov: fill ? 58 : 42 }}
         style={{ background: 'transparent' }}
         gl={{ antialias: true, alpha: true }}
         onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
