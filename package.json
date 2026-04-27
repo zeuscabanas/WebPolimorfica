@@ -12,6 +12,7 @@
     "@distube/ytdl-core": "^4.16.12",
     "@imgly/background-removal": "^1.4.5",
     "@imgly/background-removal-data": "^1.4.5",
+    "animejs": "^4.3.6",
     "jsqr": "^1.4.0",
     "leaflet": "^1.9.4",
     "next": "14.2.3",
